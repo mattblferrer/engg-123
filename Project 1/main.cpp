@@ -58,9 +58,90 @@ unsigned int convert_hex(const string& input)
   return converted;
 }
 
+void parse_instruction(unsigned int instruction, long long* reg)
+{
+  // constants to define instruction types
+  const int ADDSUB = 0x33;
+  const int ADDI = 0x13;
+  const int LD = 0x03;
+  const int SD = 0x23;
+  const int ADDFUNCT7 = 0x00;
+  const int SUBFUNCT7 = 0x20;
+  const int FUNCT3A = 0x00;  // for ADD, SUB, ADDI
+  const int FUNCT3B = 0x03;  // for LD, SD
+
+  // calculate fields of instruction using bitmasks
+  int funct7 = (instruction & (0x7F << 25)) >> 25;
+  int rs2 = (instruction & (0x1F << 20)) >> 20;
+  int rs1 = (instruction & (0x1F << 15)) >> 15;
+  int funct3 = (instruction & (0x7 << 12)) >> 12;
+  int rd = (instruction & (0x1F << 7)) >> 7;
+  int opcode = (instruction & 0x7F);
+  int immediate = (instruction & 0xFFF << 20) >> 20;
+
+  // parse if the instruction is valid and supported
+  if (opcode == ADDSUB)
+  {
+    if (rd == 0)
+    {
+      cout << "Invalid register access.\n";
+      return;
+    }
+    if (funct7 == ADDFUNCT7 && funct3 == FUNCT3A)  // ADD
+    {
+      cout << "Adding registers: " << rs1 << " and " << rs2 << "\n";
+      reg[rd] = reg[rs1] + reg[rs2];
+    }
+    if (funct7 == SUBFUNCT7 && funct3 == FUNCT3A)  // SUB
+    {
+      cout << "Subtracting registers: " << rs1 << " and " << rs2 << "\n";
+      reg[rd] = reg[rs1] - reg[rs2];
+    }
+  }
+  else if (opcode == ADDI && funct3 == FUNCT3A)  // ADDI
+  {
+    if (rd == 0)
+    {
+      cout << "Invalid register access.\n";
+      return;
+    }
+    cout << "Adding immediate value: " << immediate 
+      << " to register: " << rs1 << "\n";
+    reg[rd] = reg[rs1] + immediate;
+  }
+  else if (opcode == LD && funct3 == FUNCT3B)  // LD
+  {
+    if (rd + immediate <= 0 || rd + immediate >= 32)
+    {
+      cout << "Invalid register access.\n";
+      return;
+    }
+    cout << "Loading value from memory address: " 
+      << (rs1 + immediate) << " into register: " << rd << "\n";
+    reg[rd] = reg[rs1 + immediate];
+  }
+  else if (opcode == SD && funct3 == FUNCT3B)  // SD
+  {
+    if (rs1 + immediate <= 0 || rs1 + immediate >= 32)
+    {
+      cout << "Invalid register access.\n";
+      return;
+    }
+    cout << "Storing value from register: " 
+      << rs2 << " to memory address: " << (rs1 + immediate) << "\n";
+    reg[rs1 + immediate] = reg[rs2];
+  }
+  else  // invalid or unsupported instruction
+  {
+    cout << "Cannot be decoded. opcode: " << opcode << ", funct7: " 
+      << funct7 << ", funct3: " << funct3 << "\n";
+    return;
+  }
+}
+
 int main()
 {
-  int* reg = new int[32];
+  long long* reg = new long long[32];
   for (int i = 0; i < 32; i++)  // initialize registers to zero
   {
     reg[i] = 0;
@@ -72,18 +153,19 @@ int main()
     getline(cin, input);
     if (input == "X")
     {
-      cout << "Exiting program." << endl;
+      cout << "Exiting program.\n";
       return 0;
     }
 
     input = validate_hex(8, input);
     if (input.empty())
     {
-      cout << "Invalid input. Please try again." << endl;
+      cout << "Invalid input. Please try again.\n";
       continue;
     }
     unsigned int instruction = convert_hex(input);
-    
+    parse_instruction(instruction, reg);
+    input = "";  // reset input for next iteration
   }
   delete[] reg;
   return 0;
