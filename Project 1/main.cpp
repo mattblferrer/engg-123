@@ -1,12 +1,12 @@
 /**
  * main.cpp
  * 
+ * BERNARDO, Jonathan
  * FERRER, Matt
  * 
  * ENGG 123.01 - J1
 */
 
-#include <cctype>
 #include <iostream>
 #include <string>
 
