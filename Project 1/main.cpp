@@ -16,10 +16,8 @@ using namespace std;
  * takes an input fixed length k hex string and validates - returns 
  * the string if valid, empty string otherwise
  */
-string validate_hex(int k)
+string validate_hex(int k, string input)
 {
-  string input;
-  cin >> input;
   if (input.length() != k)
   {
     return "";
@@ -39,21 +37,22 @@ string validate_hex(int k)
 }
 
 /**
- * converts a hexadecimal string to a boolean array corresponding to
+ * converts a hexadecimal string to a 32-bit integer corresponding to
  * the binary representation of the hexadecimal digits
  */
-bool* convert_hex(const string& input)
+unsigned int convert_hex(const string& input)
 {
-  bool* converted = new bool[input.length() * 4];
-  for (int i = 0; i < input.length() * 4; i++)
+  unsigned int converted = 0;
+  int s = input.length();
+  for (int i = 0; i < s; i++)
   {
-    if (input[i / 4] > '9')  // for letters A-F (10-15)
+    if (input[i] > '9')  // for letters A-F (10-15)
     {
-      converted[i] = (input[i / 4] - 'A' + 10) & (1 << (3 - (i % 4)));
+      converted |= (input[i] - 'A' + 10) << ((s - i - 1) * 4);
     }
     else  // for numbers 0-9
     {
-      converted[i] = (input[i / 4] - '0') & (1 << (3 - (i % 4)));
+      converted |= (input[i] - '0') << ((s - i - 1) * 4);
     }
   }
   return converted;
@@ -61,6 +60,31 @@ bool* convert_hex(const string& input)
 
 int main()
 {
-  
+  int* reg = new int[32];
+  for (int i = 0; i < 32; i++)  // initialize registers to zero
+  {
+    reg[i] = 0;
+  }
+  string input = "";
+  while (input.empty())
+  {
+    cout << "Enter an 8-character hex string (or 'X' to exit): ";
+    getline(cin, input);
+    if (input == "X")
+    {
+      cout << "Exiting program." << endl;
+      return 0;
+    }
+
+    input = validate_hex(8, input);
+    if (input.empty())
+    {
+      cout << "Invalid input. Please try again." << endl;
+      continue;
+    }
+    unsigned int instruction = convert_hex(input);
+    
+  }
+  delete[] reg;
   return 0;
 }
