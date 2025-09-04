@@ -58,7 +58,7 @@ unsigned int convert_hex(const string& input)
   return converted;
 }
 
-void parse_instruction(unsigned int instruction, long long* reg)
+void parse_instruction(unsigned int instruction)
 {
   // constants to define instruction types
   const int ADDSUB = 0x33;
@@ -90,12 +90,10 @@ void parse_instruction(unsigned int instruction, long long* reg)
     if (funct7 == ADDFUNCT7 && funct3 == FUNCT3A)  // ADD
     {
       cout << "add x" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-      reg[rd] = reg[rs1] + reg[rs2];
     }
     if (funct7 == SUBFUNCT7 && funct3 == FUNCT3A)  // SUB
     {
       cout << "sub x" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
-      reg[rd] = reg[rs1] - reg[rs2];
     }
   }
   else if (opcode == ADDI && funct3 == FUNCT3A)  // ADDI
@@ -107,7 +105,6 @@ void parse_instruction(unsigned int instruction, long long* reg)
     }
     cout << "addi x" << rd << ", x" << rs1 
       << ", " << immediate << "\n";
-    reg[rd] = reg[rs1] + immediate;
   }
   else if (opcode == LD && funct3 == FUNCT3B)  // LD
   {
@@ -117,7 +114,6 @@ void parse_instruction(unsigned int instruction, long long* reg)
       return;
     }
     cout << "ld x" << rd << ", " << immediate << "(x" << rs1 << ")\n";
-    reg[rd] = reg[rs1 + immediate];
   }
   else if (opcode == SD && funct3 == FUNCT3B)  // SD
   {
@@ -128,7 +124,6 @@ void parse_instruction(unsigned int instruction, long long* reg)
     }
     cout << "sd x" << rs2 << ", " 
       << immediate << "(x" << rs1 << ")\n";
-    reg[rs1 + immediate] = reg[rs2];
   }
   else  // invalid or unsupported instruction
   {
@@ -140,11 +135,6 @@ void parse_instruction(unsigned int instruction, long long* reg)
 
 int main()
 {
-  long long* reg = new long long[32];
-  for (int i = 0; i < 32; i++)  // initialize registers to zero
-  {
-    reg[i] = 0;
-  }
   string input = "";
   while (input.empty())
   {
@@ -163,9 +153,8 @@ int main()
       continue;
     }
     unsigned int instruction = convert_hex(input);
-    parse_instruction(instruction, reg);
+    parse_instruction(instruction);
     input = "";  // reset input for next iteration
   }
-  delete[] reg;
   return 0;
 }
