@@ -5,7 +5,7 @@
  * FERRER, Matt
  * 
  * ENGG 123.01 - J1
-*/
+ */
 
 #include <iostream>
 #include <string>
@@ -89,12 +89,12 @@ void parse_instruction(unsigned int instruction, long long* reg)
     }
     if (funct7 == ADDFUNCT7 && funct3 == FUNCT3A)  // ADD
     {
-      cout << "Adding registers: " << rs1 << " and " << rs2 << "\n";
+      cout << "add x" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
       reg[rd] = reg[rs1] + reg[rs2];
     }
     if (funct7 == SUBFUNCT7 && funct3 == FUNCT3A)  // SUB
     {
-      cout << "Subtracting registers: " << rs1 << " and " << rs2 << "\n";
+      cout << "sub x" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
       reg[rd] = reg[rs1] - reg[rs2];
     }
   }
@@ -105,8 +105,8 @@ void parse_instruction(unsigned int instruction, long long* reg)
       cout << "Invalid register access.\n";
       return;
     }
-    cout << "Adding immediate value: " << immediate 
-      << " to register: " << rs1 << "\n";
+    cout << "addi x" << rd << ", x" << rs1 
+      << ", " << immediate << "\n";
     reg[rd] = reg[rs1] + immediate;
   }
   else if (opcode == LD && funct3 == FUNCT3B)  // LD
@@ -116,8 +116,7 @@ void parse_instruction(unsigned int instruction, long long* reg)
       cout << "Invalid register access.\n";
       return;
     }
-    cout << "Loading value from memory address: " 
-      << (rs1 + immediate) << " into register: " << rd << "\n";
+    cout << "ld x" << rd << ", " << immediate << "(x" << rs1 << ")\n";
     reg[rd] = reg[rs1 + immediate];
   }
   else if (opcode == SD && funct3 == FUNCT3B)  // SD
@@ -127,8 +126,8 @@ void parse_instruction(unsigned int instruction, long long* reg)
       cout << "Invalid register access.\n";
       return;
     }
-    cout << "Storing value from register: " 
-      << rs2 << " to memory address: " << (rs1 + immediate) << "\n";
+    cout << "sd x" << rs2 << ", " 
+      << immediate << "(x" << rs1 << ")\n";
     reg[rs1 + immediate] = reg[rs2];
   }
   else  // invalid or unsupported instruction
