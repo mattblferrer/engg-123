@@ -77,7 +77,16 @@ void parse_instruction(unsigned int instruction)
   int funct3 = (instruction & (0x7 << 12)) >> 12;
   int rd = (instruction & (0x1F << 7)) >> 7;
   int opcode = (instruction & 0x7F);
-  int immediate = (instruction & 0xFFF << 20) >> 20;
+  int immediate = (int)instruction >> 20;
+
+  // immediate bits for SD instruction
+  int imm11_5 = funct7;
+  int imm4_0 = rd;
+  int immSD = (imm11_5 << 5) | imm4_0;
+  if (immSD & (1 << 11))  // sign-extend if negative
+  {
+    immSD |= 0xFFFFF000;
+  }
 
   // parse if the instruction is valid and supported
   if (opcode == ADDSUB)
@@ -117,13 +126,13 @@ void parse_instruction(unsigned int instruction)
   }
   else if (opcode == SD && funct3 == FUNCT3B)  // SD
   {
-    if (immediate < -2048 && immediate > 2047)
+    if (immSD < -2048 && immSD > 2047)
     {
       cout << "Invalid register access.\n";
       return;
     }
     cout << "sd x" << rs2 << ", " 
-      << immediate << "(x" << rs1 << ")\n";
+      << immSD << "(x" << rs1 << ")\n";
   }
   else  // invalid or unsupported instruction
   {
