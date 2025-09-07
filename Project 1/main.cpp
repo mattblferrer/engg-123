@@ -108,7 +108,7 @@ void parse_instruction(unsigned int instruction)
   }
   else if (opcode == LD && funct3 == FUNCT3B)  // LD
   {
-    if (rd + immediate <= 0 || rd + immediate >= 32)
+    if (rd + immediate <= 0 || rd + immediate >= 32 || rd == 0)
     {
       cout << "Invalid register access.\n";
       return;
