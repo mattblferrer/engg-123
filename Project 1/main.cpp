@@ -131,6 +131,11 @@ void parse_instruction(unsigned int instruction)
   }
   else if (opcode == SD && funct3 == FUNCT3B)  // SD
   {
+    if (rd == 0)
+    {
+      cout << "Invalid register access.\n";
+      return;
+    }
     cout << "sd x" << rs2 << ", " 
       << immSD << "(x" << rs1 << ")\n";
   }
