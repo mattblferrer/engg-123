@@ -107,7 +107,7 @@ void parse_instruction(unsigned int instruction)
   }
   else if (opcode == ADDI && funct3 == FUNCT3A)  // ADDI
   {
-    if (rd == 0 || immediate < -2048 || immediate > 2047)
+    if (rd == 0)
     {
       cout << "Invalid register access.\n";
       return;
@@ -117,7 +117,7 @@ void parse_instruction(unsigned int instruction)
   }
   else if (opcode == LD && funct3 == FUNCT3B)  // LD
   {
-    if (rd == 0 || immediate < -2048 || immediate > 2047)
+    if (rd == 0)
     {
       cout << "Invalid register access.\n";
       return;
@@ -126,11 +126,6 @@ void parse_instruction(unsigned int instruction)
   }
   else if (opcode == SD && funct3 == FUNCT3B)  // SD
   {
-    if (immSD < -2048 || immSD > 2047)
-    {
-      cout << "Invalid register access.\n";
-      return;
-    }
     cout << "sd x" << rs2 << ", " 
       << immSD << "(x" << rs1 << ")\n";
   }
