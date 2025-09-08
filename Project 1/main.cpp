@@ -100,12 +100,15 @@ void parse_instruction(unsigned int instruction)
     {
       cout << "add x" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
     }
-    if (funct7 == SUBFUNCT7 && funct3 == FUNCT3A)  // SUB
+    else if (funct7 == SUBFUNCT7 && funct3 == FUNCT3A)  // SUB
     {
       cout << "sub x" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
     }
-    cout << "Cannot be decoded. opcode: " << opcode << ", funct7: " 
-      << funct7 << ", funct3: " << funct3 << "\n";
+    else 
+    {
+      cout << "Cannot be decoded. opcode: " << opcode << ", funct7: " 
+        << funct7 << ", funct3: " << funct3 << "\n";
+    }
   }
   else if (opcode == ADDI && funct3 == FUNCT3A)  // ADDI
   {
