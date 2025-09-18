@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <string>
+#include <sstream>
 
 using namespace std;
 
@@ -147,8 +148,90 @@ void parse_instruction(unsigned int instruction)
   }
 }
 
+void printHelpMenu()
+{
+  const string help_message = "\n"
+    "RISC-V Simulator\n"
+    "Type \"help\" for more information.\n"
+    "Type \"loaddata [address] [filename]\" to obtain lines of "
+    "hexadecimal strings from a text file specified by filename and "
+    "store the values to simulated RISC-V memory starting at the "
+    "location specified by address.\n"
+    "Type \"showdata [address] [N]\" to display contents of the "
+    "simulated RISC-V data memory in hexadecimal, starting at the "
+    "location specified by address and displaying N words.\n"
+    "Type \"loadcode [address] [filename]\" to obtain lines of "
+    "hexadecimal strings from a text file specified by filename and "
+    "store the values to simulated RISC-V memory starting at the "
+    "location specified by address.\n"
+    "Type \"showcode [address] [N]\" to display contents of the "
+    "simulated RISC-V data memory in hexadecimal, starting at the "
+    "location specified by address and displaying N words.\n"
+    "Type \"exec [address]\" to simulation execution of code "
+    "starting at the specified address.\n"
+    "Type \"exit\" to exit the program.\n";
+  cout << help_message;
+}
+
 int main()
 {
-  
+  bool exitTyped = false;
+  string input;
+  string command;
+  string address;
+  string filename;
+  string extra;
+  stringstream ss;
+  int N = 0;
+
+  // program loop, will only exit when command exit is typed
+  while (!exitTyped)
+  {
+    ss.clear();
+    cout << "> ";
+    getline(cin, input);
+    ss.str(input);
+    ss >> command >> address;
+    if (!(ss.str().empty()))
+    {
+      if (!(ss >> N)) ss >> filename; // if argument is int or string
+      else ss >> filename;
+    }
+
+    // check if input has more arguments
+    if (ss >> extra)
+    {
+      cout << "Invalid command.\n";
+    }
+    else if (command == "help" && address.empty())
+    {
+      printHelpMenu();
+    }
+    else if (command == "loaddata")
+    {
+
+    }
+    else if (command == "showdata")
+    {
+
+    }
+    else if (command == "loadcode")
+    {
+
+    }
+    else if (command == "exec")
+    {
+
+    }
+    else if (command == "exit" && address.empty())
+    {
+      exitTyped = true;
+    }
+    else
+    {
+      cout << "Invalid command.\n";
+    }
+  }
+
   return 0;
 }
