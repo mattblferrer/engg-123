@@ -219,6 +219,10 @@ int main()
     {
 
     }
+    else if (command == "showcode")
+    {
+
+    }
     else if (command == "exec")
     {
 
