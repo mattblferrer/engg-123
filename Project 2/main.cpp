@@ -59,7 +59,8 @@ unsigned int convert_hex(const string& input)
   return converted;
 }
 
-void parse_instruction(unsigned int instruction)
+void parse_instruction(unsigned int instruction, long long* &reg, 
+  uint8_t* &mem, const int mem_size)
 {
   // constants to define instruction types
   const int ADDSUB = 0x33;
@@ -100,10 +101,12 @@ void parse_instruction(unsigned int instruction)
     if (funct7 == ADDFUNCT7 && funct3 == FUNCT3A)  // ADD
     {
       cout << "add x" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
+      reg[rd] = reg[rs1] + reg[rs2];
     }
     else if (funct7 == SUBFUNCT7 && funct3 == FUNCT3A)  // SUB
     {
       cout << "sub x" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
+      reg[rd] = reg[rs1] - reg[rs2];
     }
     else 
     {
@@ -120,6 +123,7 @@ void parse_instruction(unsigned int instruction)
     }
     cout << "addi x" << rd << ", x" << rs1 
       << ", " << immediate << "\n";
+    reg[rd] = reg[rs1] + immediate;
   }
   else if (opcode == LD && funct3 == FUNCT3B)  // LD
   {
@@ -128,7 +132,19 @@ void parse_instruction(unsigned int instruction)
       cout << "Invalid register access.\n";
       return;
     }
+    long long addr = reg[rs1] + immediate; // effective address
+    if (addr < 0 || addr + 7 >= mem_size) // valid memory access
+    {
+      cout << "Invalid memory access.\n";
+      return;
+    }
     cout << "ld x" << rd << ", " << immediate << "(x" << rs1 << ")\n";
+    long long value = 0;
+    for (int i = 0; i < 8; i++) // load 8 bytes
+    {
+      value |= ((long long)mem[addr + i]) << (i * 8);
+    }
+    reg[rd] = value;
   }
   else if (opcode == SD && funct3 == FUNCT3B)  // SD
   {
@@ -137,8 +153,19 @@ void parse_instruction(unsigned int instruction)
       cout << "Invalid register access.\n";
       return;
     }
+    long long addr = reg[rs1] + immSD; // effective address
+    if (addr < 0 || addr + 7 >= mem_size) // valid memory access
+    {
+      cout << "Invalid memory access.\n";
+      return;
+    }
     cout << "sd x" << rs2 << ", " 
       << immSD << "(x" << rs1 << ")\n";
+    long long value = reg[rs2]; // value to store
+    for (int i = 0; i < 8; i++) // store 8 bytes
+    {
+      mem[addr + i] = (value >> (i * 8)) & 0xFF;
+    }
   }
   else  // invalid or unsupported instruction
   {
@@ -183,7 +210,6 @@ int main()
   string extra;
   stringstream ss;
   int N = 0;
-  
 
   // register and memory declarations
   long long* reg = new long long[32]; // 32 64-bit registers
@@ -199,7 +225,6 @@ int main()
   {
     mem[i] = 0;
   }
-
 
   // starting program 
   cout << "RISC-V Simulator\nType \"help\" for more information.\n";
