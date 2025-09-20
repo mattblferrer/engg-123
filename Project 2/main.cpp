@@ -4,14 +4,56 @@
  * BERNARDO, Jonathan
  * FERRER, Matt
  * 
+ * Project 2 - Interactive Basic RISC-V Simulator
  * ENGG 123.01 - J1
  */
 
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <fstream>
+#include <vector>
 
 using namespace std;
+
+/**
+ * returns true if hexadecimal strings of fixed length k are obtained
+ * from the filename
+ * returns false otherwise
+ */
+bool importHexFromFile(string filename, string* &hexData, int k = 8)
+{
+  ifstream myfile;
+  stringstream ss;
+  string line;
+  vector<string> data;
+
+  // check if filename is valid
+  myfile.open(filename);
+  if (!(myfile.is_open())) return false;
+
+  // get lines of data from file
+  while (getline(myfile, line))
+  {
+    ss.str(line);
+    string hexString;
+    if (!(ss >> hexString)) break;
+    hexString = validate_hex(k, hexString);
+    if (hexString == "") break;
+    data.push_back(hexString);
+  }
+  myfile.close();
+
+  // convert data as vector to array
+  if (data.size() == 0) return false;
+  hexData = new string[data.size()];
+  for (int i = 0; i < data.size(); i++)
+  {
+    hexData[i] = data[i];
+  }
+
+  return true;
+}
 
 /**
  * takes an input fixed length k hex string and validates - returns 
