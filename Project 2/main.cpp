@@ -21,7 +21,8 @@ using namespace std;
  * from the filename
  * returns false otherwise
  */
-bool importHexFromFile(string filename, string* &hexData, int k = 8)
+bool importHexFromFile(string filename, string* &hexData, int &counter
+  ,int k = 8)
 {
   ifstream myfile;
   stringstream ss;
@@ -41,6 +42,8 @@ bool importHexFromFile(string filename, string* &hexData, int k = 8)
     hexString = validate_hex(k, hexString);
     if (hexString == "") break;
     data.push_back(hexString);
+    counter++;
+    ss.clear();
   }
   myfile.close();
 
@@ -51,7 +54,6 @@ bool importHexFromFile(string filename, string* &hexData, int k = 8)
   {
     hexData[i] = data[i];
   }
-
   return true;
 }
 
@@ -242,6 +244,42 @@ void printHelpMenu()
   cout << help_message;
 }
 
+/**
+ * store hexadecimal strings from a file to simulated RISC-V memory
+ */
+void loadCommand(string filename, string addr, uint8_t* &mem,
+  const int mem_size)
+{
+  string* hexData = new string[0];
+  int counter = 0;
+  if (!importHexFromFile(filename, hexData, counter))
+  {
+    cout << "Unable to import valid hex data from "
+      << filename << ".\n";
+    delete[] hexData;
+    return;
+  }
+  for (int i = 0; i < counter; i++)
+  {
+    unsigned int value = convert_hex(hexData[i]);
+    for (int j = 0; j < 4; j++) // store 4 bytes
+    {
+      int mem_index = addr + i * 4 + j;
+      if (mem_index < 0 || mem_index >= mem_size) 
+      {
+        cout << "Memory write out of bounds at address " << 
+          mem_index << ".\n";
+        delete[] hexData;
+        return;
+      }
+      mem[mem_index] = (value >> (j * 8)) & 0xFF;
+    }
+  }
+  cout << "Data loaded to memory starting at address " 
+    << addr << ".\n";
+  delete[] hexData;
+}
+
 int main()
 {
   bool exitTyped = false;
@@ -285,8 +323,9 @@ int main()
       else ss >> filename;
     }
 
-    // check if input has more arguments
-    if (ss >> extra)
+    // TO BE IMPLEMENTED - CHECK IF ADDRESS IS VALID INSIDE IF CHAIN
+
+    if (ss >> extra) // check if input has more arguments
     {
       cout << "Invalid command.\n";
     }
@@ -294,9 +333,13 @@ int main()
     {
       printHelpMenu();
     }
+    else if (command == "exit" && address.empty())
+    {
+      exitTyped = true;
+    }
     else if (command == "loaddata")
     {
-
+      loadCommand(filename, address, mem, mem_size);
     }
     else if (command == "showdata")
     {
@@ -313,10 +356,6 @@ int main()
     else if (command == "exec")
     {
 
-    }
-    else if (command == "exit" && address.empty())
-    {
-      exitTyped = true;
     }
     else
     {
