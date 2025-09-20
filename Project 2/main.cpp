@@ -324,5 +324,9 @@ int main()
     }
   }
 
+  // delete dynamically allocated memory
+  delete[] reg;
+  delete[] mem;
+
   return 0;
 }
