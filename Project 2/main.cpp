@@ -183,6 +183,26 @@ int main()
   string extra;
   stringstream ss;
   int N = 0;
+  
+
+  // register and memory declarations
+  long long* reg = new long long[32]; // 32 64-bit registers
+  const int mem_size = 1024 * 64; // 64 KB memory
+  uint8_t* mem = new uint8_t[mem_size];
+
+  // initialize registers and memory to zero
+  for (int i = 0; i < 32; i++)
+  {
+    reg[i] = 0;
+  }
+  for (int i = 0; i < mem_size; i++)
+  {
+    mem[i] = 0;
+  }
+
+
+  // starting program 
+  cout << "RISC-V Simulator\nType \"help\" for more information.\n";
 
   // program loop, will only exit when command exit is typed
   while (!exitTyped)
