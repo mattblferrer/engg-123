@@ -253,7 +253,7 @@ void printHelpMenu()
 /**
  * store hexadecimal strings from a file to simulated RISC-V memory
  */
-void loadData(string filename, string addr, unsigned char* &mem,
+void loadMemory(string filename, string addr, unsigned char* &mem,
   const int mem_size)
 {
   string* hexData = new string[0];
@@ -286,7 +286,10 @@ void loadData(string filename, string addr, unsigned char* &mem,
   delete[] hexData;
 }
 
-void showData(string addr, int N, unsigned char* &mem,
+/**
+ * shows the contents of simulated RISC-V memory in hexadecimal
+ */
+void showMemory(string addr, int N, unsigned char* &mem,
   const int mem_size)
 {
   int start = convertHex(addr);
@@ -330,7 +333,8 @@ int main()
   // register and memory declarations
   long long* reg = new long long[32]; // 32 64-bit registers
   const int mem_size = 1024 * 64; // 64 KB memory
-  unsigned char* mem = new unsigned char[mem_size];
+  unsigned char* data_mem = new unsigned char[mem_size];
+  unsigned char* inst_mem = new unsigned char[mem_size];  
 
   // initialize registers and memory to zero
   for (int i = 0; i < 32; i++)
@@ -339,7 +343,8 @@ int main()
   }
   for (int i = 0; i < mem_size; i++)
   {
-    mem[i] = 0;
+    data_mem[i] = 0;
+    inst_mem[i] = 0;
   }
 
   // starting program 
@@ -404,12 +409,13 @@ int main()
     }
     else if (command == "showdata")
     {
-      showData(address, N, mem, mem_size);
+      showMemory(address, N, data_mem, mem_size);
       continue;
     }
     
     else if (command == "showcode")
     {
+      showMemory(address, N, inst_mem, mem_size);
       continue;
     }
     
@@ -419,21 +425,24 @@ int main()
       cout << "Invalid filename.\n";
       continue;
     }
-    if (command == "loadcode")
+    if (command == "loaddata")
     {
+      loadMemory(filename, address, data_mem, mem_size);
       continue;
     }
-    else if (command == "loaddata")
+    else if (command == "loadcode")
     {
-      loadData(filename, address, mem, mem_size);
+      loadMemory(filename, address, inst_mem, mem_size);
       continue;
     }
+    
     cout << "Invalid command.\n";
   }
 
   // delete dynamically allocated memory
   delete[] reg;
-  delete[] mem;
+  delete[] data_mem;
+  delete[] inst_mem;
 
   return 0;
 }
