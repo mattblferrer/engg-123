@@ -103,6 +103,9 @@ unsigned int convertHex(const string& input)
   return converted;
 }
 
+/**
+ * parses and executes a RISC-V instruction
+ */
 void parseInstruction(unsigned int instruction, long long* &reg, 
   unsigned char* &mem, const int mem_size)
 {
@@ -219,6 +222,9 @@ void parseInstruction(unsigned int instruction, long long* &reg,
   }
 }
 
+/**
+ * prints the help menu with available commands and their usage
+ */
 void printHelpMenu()
 {
   const string help_message = "\n"
@@ -323,7 +329,7 @@ int main()
       else ss >> filename;
     }
 
-    // TO BE IMPLEMENTED - CHECK IF ADDRESS IS VALID INSIDE IF CHAIN
+    // TODO: CHECK IF ADDRESS IS VALID INSIDE IF CHAIN
 
     if (ss >> extra) // check if input has more arguments
     {
