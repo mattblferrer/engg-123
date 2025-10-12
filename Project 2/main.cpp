@@ -253,7 +253,7 @@ void printHelpMenu()
 /**
  * store hexadecimal strings from a file to simulated RISC-V memory
  */
-void loadCommand(string filename, string addr, unsigned char* &mem,
+void loadData(string filename, string addr, unsigned char* &mem,
   const int mem_size)
 {
   string* hexData = new string[0];
@@ -345,11 +345,11 @@ int main()
     }
     else if (command == "loaddata")
     {
-      loadCommand(filename, address, mem, mem_size);
+      loadData(filename, address, mem, mem_size);
     }
     else if (command == "showdata")
     {
-
+      showData(address, N, mem, mem_size);
     }
     else if (command == "loadcode")
     {
