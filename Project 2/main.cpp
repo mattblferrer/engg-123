@@ -325,12 +325,6 @@ void showData(string addr, int N, unsigned char* &mem,
 int main()
 {
   bool exitTyped = false;
-  string input;
-  string command;
-  string address;
-  string filename;
-  string extra;
-  stringstream ss;
   int N = 0;
 
   // register and memory declarations
@@ -354,6 +348,13 @@ int main()
   // program loop, will only exit when command exit is typed
   while (!exitTyped)
   {
+    string input;
+    string command;
+    string address;
+    string filename;
+    string extra;
+    stringstream ss;
+
     ss.clear();
     cout << "> ";
     getline(cin, input);
