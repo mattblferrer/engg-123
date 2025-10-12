@@ -267,10 +267,10 @@ void loadData(string filename, string addr, unsigned char* &mem,
   }
   for (int i = 0; i < counter; i++)
   {
-    unsigned int value = convertHex(hexData[i]);
-    for (int j = 0; j < 4; j++) // store 4 bytes
+    unsigned long long value = convertHex(hexData[i]);
+    for (int j = 0; j < 8; j++) // store 8 bytes
     {
-      int mem_index = addr + i * 4 + j;
+      int mem_index = convertHex(addr) + i * 8 + j;
       if (mem_index < 0 || mem_index >= mem_size) 
       {
         cout << "Memory write out of bounds at address " << 
@@ -284,6 +284,42 @@ void loadData(string filename, string addr, unsigned char* &mem,
   cout << "Data loaded to memory starting at address " 
     << addr << ".\n";
   delete[] hexData;
+}
+
+void showData(string addr, int N, unsigned char* &mem,
+  const int mem_size)
+{
+  int start = convertHex(addr);
+  if (start < 0 || start >= mem_size)
+  {
+    cout << "Invalid memory access.\n";
+    return;
+  }
+  if (N <= 0)
+  {
+    cout << "N must be a positive integer.\n";
+    return;
+  }
+  for (int i = 0; i < N; i++)
+  {
+    int mem_index = start + i * 8;
+    if (mem_index < 0 || mem_index + 7 >= mem_size)
+    {
+      cout << "Memory read out of bounds at address " 
+        << mem_index << ".\n";
+      return;
+    }
+    unsigned long long value = 0;
+    for (int j = 0; j < 8; j++) // load 8 bytes
+    {
+      value |= ((unsigned long long)mem[mem_index + j]) << (j * 8);
+    }
+    cout << hex << uppercase;
+    cout.width(16);
+    cout.fill('0');
+    cout << value << "\n";
+    cout << dec; // reset to decimal output
+  }
 }
 
 int main()
