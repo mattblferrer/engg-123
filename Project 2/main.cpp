@@ -228,24 +228,24 @@ void parseInstruction(unsigned int instruction, long long* &reg,
 void printHelpMenu()
 {
   const string help_message = "\n"
-    "RISC-V Simulator\n"
-    "Type \"help\" for more information.\n"
+    "RISC-V Simulator\n\n"
+    "Type \"help\" for more information.\n\n"
     "Type \"loaddata [address] [filename]\" to obtain lines of "
     "hexadecimal strings from a text file specified by filename and "
     "store the values to simulated RISC-V memory starting at the "
-    "location specified by address.\n"
+    "location specified by address.\n\n"
     "Type \"showdata [address] [N]\" to display contents of the "
     "simulated RISC-V data memory in hexadecimal, starting at the "
     "location specified by address and displaying N words.\n"
     "Type \"loadcode [address] [filename]\" to obtain lines of "
     "hexadecimal strings from a text file specified by filename and "
     "store the values to simulated RISC-V memory starting at the "
-    "location specified by address.\n"
+    "location specified by address.\n\n"
     "Type \"showcode [address] [N]\" to display contents of the "
     "simulated RISC-V data memory in hexadecimal, starting at the "
     "location specified by address and displaying N words.\n"
     "Type \"exec [address]\" to simulation execution of code "
-    "starting at the specified address.\n"
+    "starting at the specified address.\n\n"
     "Type \"exit\" to exit the program.\n";
   cout << help_message;
 }
