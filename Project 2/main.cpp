@@ -375,53 +375,60 @@ int main()
       }
     }
 
-    // TODO: CHECK IF ADDRESS IS VALID INSIDE IF CHAIN
-
+    // commands with no arguments
     if (ss >> extra) // check if input has more arguments
     {
       cout << "Invalid command.\n";
+      continue;
     }
     else if (command == "help" && address.empty())
     {
       printHelpMenu();
+      continue;
     }
     else if (command == "exit" && address.empty())
     {
       exitTyped = true;
+      continue;
     }
-    else if (command == "loaddata")
+
+    // commands with address argument: validate address
+    if (validateHex(8, address).empty())
     {
-      if (filename.empty())
-      {
-        cout << "Invalid filename.\n";
-        continue;
-      }
-      loadData(filename, address, mem, mem_size);
+      cout << "Invalid address.\n";
+      continue;
+    }
+    if (command == "exec")
+    {
+      continue;
     }
     else if (command == "showdata")
     {
       showData(address, N, mem, mem_size);
+      continue;
     }
-    else if (command == "loadcode")
-    {
-      if (filename.empty())
-      {
-        cout << "Invalid filename.\n";
-        continue;
-      }
-    }
+    
     else if (command == "showcode")
     {
-
+      continue;
     }
-    else if (command == "exec")
+    
+    // commands with address, filename arguments: validate filename
+    if (filename.empty())
     {
-
+      cout << "Invalid filename.\n";
+      continue;
     }
-    else
+    if (command == "loadcode")
     {
-      cout << "Invalid command.\n";
+      continue;
     }
+    else if (command == "loaddata")
+    {
+      loadData(filename, address, mem, mem_size);
+      continue;
+    }
+    cout << "Invalid command.\n";
   }
 
   // delete dynamically allocated memory
