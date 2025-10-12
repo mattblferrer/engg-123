@@ -8,10 +8,10 @@
  * ENGG 123.01 - J1
  */
 
-#include <iostream>
-#include <string>
-#include <sstream>
 #include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
 #include <vector>
 
 using namespace std;
