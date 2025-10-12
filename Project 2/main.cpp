@@ -361,8 +361,17 @@ int main()
     ss >> command >> address;
     if (!(ss.str().empty()))
     {
-      if (!(ss >> N)) ss >> filename; // if argument is int or string
-      else ss >> filename;
+      ss >> filename;
+      // check if filename is valid integer N
+      if (isdigit(filename[0]))
+      {
+        N = stoi(filename);
+        filename = "";
+      }
+      else
+      {
+        N = 0;
+      }
     }
 
     // TODO: CHECK IF ADDRESS IS VALID INSIDE IF CHAIN
@@ -381,6 +390,11 @@ int main()
     }
     else if (command == "loaddata")
     {
+      if (filename.empty())
+      {
+        cout << "Invalid filename.\n";
+        continue;
+      }
       loadData(filename, address, mem, mem_size);
     }
     else if (command == "showdata")
@@ -389,7 +403,11 @@ int main()
     }
     else if (command == "loadcode")
     {
-
+      if (filename.empty())
+      {
+        cout << "Invalid filename.\n";
+        continue;
+      }
     }
     else if (command == "showcode")
     {
