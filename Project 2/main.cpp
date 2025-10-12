@@ -17,51 +17,10 @@
 using namespace std;
 
 /**
- * returns true if hexadecimal strings of fixed length k are obtained
- * from the filename
- * returns false otherwise
- */
-bool importHexFromFile(string filename, string* &hexData, int &counter
-  ,int k = 8)
-{
-  ifstream myfile;
-  stringstream ss;
-  string line;
-  vector<string> data;
-
-  // check if filename is valid
-  myfile.open(filename);
-  if (!(myfile.is_open())) return false;
-
-  // get lines of data from file
-  while (getline(myfile, line))
-  {
-    ss.str(line);
-    string hexString;
-    if (!(ss >> hexString)) break;
-    hexString = validate_hex(k, hexString);
-    if (hexString == "") break;
-    data.push_back(hexString);
-    counter++;
-    ss.clear();
-  }
-  myfile.close();
-
-  // convert data as vector to array
-  if (data.size() == 0) return false;
-  hexData = new string[data.size()];
-  for (int i = 0; i < data.size(); i++)
-  {
-    hexData[i] = data[i];
-  }
-  return true;
-}
-
-/**
  * takes an input fixed length k hex string and validates - returns 
  * the string if valid, empty string otherwise
  */
-string validate_hex(int k, string input)
+string validateHex(int k, string input)
 {
   if (input.length() != k)
   {
@@ -82,10 +41,51 @@ string validate_hex(int k, string input)
 }
 
 /**
+ * returns true if hexadecimal strings of fixed length k are obtained
+ * from the filename
+ * returns false otherwise
+ */
+bool importHexFromFile(string filename, string* &hexData, int &counter
+  , int k = 8)
+{
+  ifstream myfile;
+  stringstream ss;
+  string line;
+  vector<string> data;
+
+  // check if filename is valid
+  myfile.open(filename);
+  if (!(myfile.is_open())) return false;
+
+  // get lines of data from file
+  while (getline(myfile, line))
+  {
+    ss.str(line);
+    string hexString;
+    if (!(ss >> hexString)) break;
+    hexString = validateHex(k, hexString);
+    if (hexString == "") break;
+    data.push_back(hexString);
+    counter++;
+    ss.clear();
+  }
+  myfile.close();
+
+  // convert data as vector to array
+  if (data.size() == 0) return false;
+  hexData = new string[data.size()];
+  for (int i = 0; i < data.size(); i++)
+  {
+    hexData[i] = data[i];
+  }
+  return true;
+}
+
+/**
  * converts a hexadecimal string to a 32-bit integer corresponding to
  * the binary representation of the hexadecimal digits
  */
-unsigned int convert_hex(const string& input)
+unsigned int convertHex(const string& input)
 {
   unsigned int converted = 0;
   int s = input.length();
@@ -103,8 +103,8 @@ unsigned int convert_hex(const string& input)
   return converted;
 }
 
-void parse_instruction(unsigned int instruction, long long* &reg, 
-  uint8_t* &mem, const int mem_size)
+void parseInstruction(unsigned int instruction, long long* &reg, 
+  unsigned char* &mem, const int mem_size)
 {
   // constants to define instruction types
   const int ADDSUB = 0x33;
@@ -247,7 +247,7 @@ void printHelpMenu()
 /**
  * store hexadecimal strings from a file to simulated RISC-V memory
  */
-void loadCommand(string filename, string addr, uint8_t* &mem,
+void loadCommand(string filename, string addr, unsigned char* &mem,
   const int mem_size)
 {
   string* hexData = new string[0];
@@ -261,7 +261,7 @@ void loadCommand(string filename, string addr, uint8_t* &mem,
   }
   for (int i = 0; i < counter; i++)
   {
-    unsigned int value = convert_hex(hexData[i]);
+    unsigned int value = convertHex(hexData[i]);
     for (int j = 0; j < 4; j++) // store 4 bytes
     {
       int mem_index = addr + i * 4 + j;
@@ -294,7 +294,7 @@ int main()
   // register and memory declarations
   long long* reg = new long long[32]; // 32 64-bit registers
   const int mem_size = 1024 * 64; // 64 KB memory
-  uint8_t* mem = new uint8_t[mem_size];
+  unsigned char* mem = new unsigned char[mem_size];
 
   // initialize registers and memory to zero
   for (int i = 0; i < 32; i++)
