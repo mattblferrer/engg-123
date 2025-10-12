@@ -254,7 +254,7 @@ void printHelpMenu()
  * store hexadecimal strings from a file to simulated RISC-V memory
  */
 void loadMemory(string filename, string addr, unsigned char* &mem,
-  const int mem_size)
+  const int word_size, const int mem_size)
 {
   string* hexData = new string[0];
   int counter = 0;
@@ -268,9 +268,9 @@ void loadMemory(string filename, string addr, unsigned char* &mem,
   for (int i = 0; i < counter; i++)
   {
     unsigned long long value = convertHex(hexData[i]);
-    for (int j = 0; j < 8; j++) // store 8 bytes
+    for (int j = 0; j < word_size; j++) // store word_size bytes
     {
-      int mem_index = convertHex(addr) + i * 8 + j;
+      int mem_index = convertHex(addr) + i * word_size + j;
       if (mem_index < 0 || mem_index >= mem_size) 
       {
         cout << "Memory write out of bounds at address " << 
@@ -290,7 +290,7 @@ void loadMemory(string filename, string addr, unsigned char* &mem,
  * shows the contents of simulated RISC-V memory in hexadecimal
  */
 void showMemory(string addr, int N, unsigned char* &mem,
-  const int mem_size)
+  const int word_size, const int mem_size)
 {
   int start = convertHex(addr);
   if (start < 0 || start >= mem_size)
@@ -305,20 +305,20 @@ void showMemory(string addr, int N, unsigned char* &mem,
   }
   for (int i = 0; i < N; i++)
   {
-    int mem_index = start + i * 8;
-    if (mem_index < 0 || mem_index + 7 >= mem_size)
+    int mem_index = start + i * word_size;
+    if (mem_index < 0 || mem_index + word_size - 1 >= mem_size)
     {
       cout << "Memory read out of bounds at address " 
         << mem_index << ".\n";
       return;
     }
     unsigned long long value = 0;
-    for (int j = 0; j < 8; j++) // load 8 bytes
+    for (int j = 0; j < word_size; j++) // load word_size bytes
     {
       value |= ((unsigned long long)mem[mem_index + j]) << (j * 8);
-    }
+    } 
     cout << hex << uppercase;
-    cout.width(16);
+    cout.width(word_size * 2);
     cout.fill('0');
     cout << value << "\n";
     cout << dec; // reset to decimal output
@@ -409,13 +409,13 @@ int main()
     }
     else if (command == "showdata")
     {
-      showMemory(address, N, data_mem, mem_size);
+      showMemory(address, N, data_mem, 8, mem_size);
       continue;
     }
     
     else if (command == "showcode")
     {
-      showMemory(address, N, inst_mem, mem_size);
+      showMemory(address, N, inst_mem, 4, mem_size);
       continue;
     }
     
@@ -427,12 +427,12 @@ int main()
     }
     if (command == "loaddata")
     {
-      loadMemory(filename, address, data_mem, mem_size);
+      loadMemory(filename, address, data_mem, 8, mem_size);
       continue;
     }
     else if (command == "loadcode")
     {
-      loadMemory(filename, address, inst_mem, mem_size);
+      loadMemory(filename, address, inst_mem, 4, mem_size);
       continue;
     }
     
