@@ -159,12 +159,12 @@ void parseInstruction(unsigned int instruction, long long* &reg,
   const int FUNCT3C = 0x04; // for BLT
 
   // calculate fields of instruction using bitmasks
-  int funct7 = (instruction & (0x7F << 25)) >> 25;
-  int rs2 = (instruction & (0x1F << 20)) >> 20;
-  int rs1 = (instruction & (0x1F << 15)) >> 15;
-  int funct3 = (instruction & (0x7 << 12)) >> 12;
-  int rd = (instruction & (0x1F << 7)) >> 7;
-  int opcode = (instruction & 0x7F);
+  int funct7 = (instruction & (0x7F << 25)) >> 25;  // 7 bits
+  int rs2 = (instruction & (0x1F << 20)) >> 20;  // 5 bits
+  int rs1 = (instruction & (0x1F << 15)) >> 15;  // 5 bits
+  int funct3 = (instruction & (0x7 << 12)) >> 12;  // 3 bits
+  int rd = (instruction & (0x1F << 7)) >> 7;  // 5 bits
+  int opcode = (instruction & 0x7F);  // 7 bits
   int immediate = (int)instruction >> 20;
 
   // immediate bits for SD, BEQ, and BLT instructions
