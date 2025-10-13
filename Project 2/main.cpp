@@ -398,6 +398,38 @@ void showMemory(string addr, int N, unsigned char* &mem,
   }
 }
 
+void execute(long long* &reg, unsigned char* &inst_mem, 
+  unsigned char* &data_mem, const int mem_size, string addr)
+{
+  int pc = convertHex(addr); // program counter
+  if (pc < 0 || pc >= mem_size)
+  {
+    cout << "Invalid memory access.\n";
+    return;
+  }
+  while (true)
+  {
+    if (pc < 0 || pc + 3 >= mem_size)
+    {
+      cout << "Memory read out of bounds at address " 
+        << pc << ".\n";
+      return;
+    }
+    unsigned int instruction = 0;
+    for (int i = 0; i < 4; i++) // load 4 bytes
+    {
+      instruction |= ((unsigned int)inst_mem[pc + i]) << (i * 8);
+    }
+    if (instruction == 0) // halt on instruction of all zeros
+    {
+      cout << "Halt instruction encountered. Stopping execution.\n";
+      return;
+    }
+    parseInstruction(instruction, reg, data_mem, mem_size);
+    pc += 4; // move to next instruction
+  }
+}
+
 int main()
 {
   bool exitTyped = false;
@@ -478,6 +510,7 @@ int main()
     }
     if (command == "exec")
     {
+      execute(reg, inst_mem, data_mem, mem_size, address);
       continue;
     }
     else if (command == "showdata")
