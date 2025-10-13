@@ -152,15 +152,16 @@ void parseInstruction(unsigned int instruction, long long* &reg,
   const int LD = 0x03;
   const int SD = 0x23;
   const int BEQBLT = 0x63;
-  const int ADDFUNCT7 = 0x00;
+  const int ADDSLLIFUNCT7 = 0x00; 
   const int SUBFUNCT7 = 0x20;
   const int FUNCT3A = 0x00;  // for ADD, SUB, ADDI, BEQ
   const int FUNCT3B = 0x03;  // for LD, SD
   const int FUNCT3C = 0x04; // for BLT
+  const int FUNCT3D = 0x01; // for SLLI
 
   // calculate fields of instruction using bitmasks
   int funct7 = (instruction & (0x7F << 25)) >> 25;
-  int rs2 = (instruction & (0x1F << 20)) >> 20;
+  int rs2 = (instruction & (0x1F << 20)) >> 20; 
   int rs1 = (instruction & (0x1F << 15)) >> 15;
   int funct3 = (instruction & (0x7 << 12)) >> 12;
   int rd = (instruction & (0x1F << 7)) >> 7;
@@ -176,6 +177,9 @@ void parseInstruction(unsigned int instruction, long long* &reg,
     immSDandB |= 0xFFFFF000;
   }
 
+  // shift ammount for slli
+  int shamt = rs2;
+
   // parse if the instruction is valid and supported
   if (opcode == ADDSUB)
   {
@@ -184,7 +188,7 @@ void parseInstruction(unsigned int instruction, long long* &reg,
       cout << "Invalid register access.\n";
       return;
     }
-    if (funct7 == ADDFUNCT7 && funct3 == FUNCT3A)  // ADD
+    if (funct7 == ADDSLLIFUNCT7 && funct3 == FUNCT3A)  // ADD
     {
       cout << "add x" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
       reg[rd] = reg[rs1] + reg[rs2];
@@ -272,6 +276,16 @@ void parseInstruction(unsigned int instruction, long long* &reg,
       pc += immSDandB;
       return;
     }
+  }
+  else if (opcode = ADDSLLIFUNCT7 && funct3 == FUNCT3D) // SLLI
+  {
+    if (rd == 0)
+    {
+      cout << "Invalid register access.\n";
+      return;
+    }
+    cout << "slli x" << rd << ", x" << rs1 << ", " << shamt << "\n";
+    reg[rd] = reg[rs1] << shamt;
   }
   else  // invalid or unsupported instruction
   {
