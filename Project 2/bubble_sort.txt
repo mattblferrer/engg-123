@@ -1,0 +1,19 @@
+00000513 # addi x10, x0, 0      # i = 0, x10 = i
+40a106b3 # sub x12, x2, x10     # temp = n - i, x2 = number of elements
+fff60613 # addi x12, x12, -1    # temp = n - i - 1
+00000593 # addi x11, x0, 0      # j = 0, x11 = j
+feb64ae3 # blt x12, x11, -12    # if temp < j, go back three instructions
+000086b3 # add x13, x1, x0      # base pointer to array, x1 = start of array
+00359713 # slli x14, x11, 3     # offset = j * 8
+00e686b3 # add x13, x13, x14    # & arr[j]
+0006b783 # ld x15, 0(x13)       # a = arr[j], x15 = a
+0086b803 # ld x16, 8(x13)       # b = arr[j+1], x16 = b
+0107c463 # blt x15, x16, 8      # if a < b, skip two instructions
+0106b023 # sd x16, 0(x13)       # swap
+00f6b423 # sd x15, 8(x13)       # swap
+00158593 # addi x11, x11, 1     # j++
+fc000ce3 # beq x0, x0, -40      # jump to start of inner loop, line 5
+00150513 # addi x10, x10, 1     # i++
+40a108b3 # sub x17, x2, x10     # x17 = n - i
+fff88893 # addi x17, x17, -1    # x17 = n - i - 1
+fb104ee3 # blt x0, x17, -68     # go back 17 instructions if i < n - 1
