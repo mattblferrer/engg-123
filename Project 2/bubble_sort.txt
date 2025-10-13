@@ -1,8 +1,8 @@
 00000513 # addi x10, x0, 0      # i = 0, x10 = i
-40a106b3 # sub x12, x2, x10     # temp = n - i, x2 = number of elements
+40a10633 # sub x12, x2, x10     # temp = n - i, x2 = number of elements
 fff60613 # addi x12, x12, -1    # temp = n - i - 1
 00000593 # addi x11, x0, 0      # j = 0, x11 = j
-feb648e3 # blt x12, x11, -16    # if temp < j, go back three instructions
+02b64463 # blt x12, x11, 40    # if temp < j, jump to i increment
 000086b3 # add x13, x1, x0      # base pointer to array, x1 = start of array
 00359713 # slli x14, x11, 3     # offset = j * 8
 00e686b3 # add x13, x13, x14    # & arr[j]

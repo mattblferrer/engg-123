@@ -111,7 +111,7 @@ void parseInstruction(unsigned int instruction, long long* &reg,
 {
   // constants to define instruction types
   const int ADDSUB = 0x33;
-  const int ADDI = 0x13;
+  const int ADDISLLI = 0x13;
   const int LD = 0x03;
   const int SD = 0x23;
   const int BEQBLT = 0x63;
@@ -165,7 +165,7 @@ void parseInstruction(unsigned int instruction, long long* &reg,
         << funct7 << ", funct3: " << funct3 << "\n";
     }
   }
-  else if (opcode == ADDI && funct3 == FUNCT3A)  // ADDI
+  else if (opcode == ADDISLLI && funct3 == FUNCT3A)  // ADDI
   {
     if (rd == 0)
     {
@@ -238,7 +238,8 @@ void parseInstruction(unsigned int instruction, long long* &reg,
       return;
     }
   }
-  else if (opcode = ADDSLLIFUNCT7 && funct3 == FUNCT3D) // SLLI
+  else if (opcode == ADDISLLI && funct7 == ADDSLLIFUNCT7 
+    && funct3 == FUNCT3D) // SLLI
   {
     // shift ammount for slli
     int shamt = rs2;
@@ -374,6 +375,8 @@ void execute(long long* &reg, unsigned char* &inst_mem,
     cout << "Invalid memory access.\n";
     return;
   }
+  reg[1] = convertHex(addr);
+  reg[2] = 10; // sorts 10 digits
   while (true)
   {
     if (pc < 0 || pc + 3 >= mem_size)
