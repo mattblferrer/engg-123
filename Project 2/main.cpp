@@ -264,7 +264,7 @@ void printHelpMenu()
 /**
  * store hexadecimal strings from a file to simulated RISC-V memory
  */
-void loadMemory(string filename, string addr, 
+void loadMemory(string filename, int addr, 
   unsigned char* &mem, const int word_size, const int mem_size)
 {
   string* hexData = new string[0];
@@ -281,7 +281,7 @@ void loadMemory(string filename, string addr,
     unsigned long long value = convertHex(hexData[i]);
     for (int j = 0; j < word_size; j++) // store word_size bytes
     {
-      int mem_index = convertHex(addr) + i * word_size + j;
+      int mem_index = addr + i * word_size + j;
       if (mem_index < 0 || mem_index >= mem_size) 
       {
         cout << "Memory write out of bounds at address " << 
@@ -300,11 +300,10 @@ void loadMemory(string filename, string addr,
 /**
  * shows the contents of simulated RISC-V memory in hexadecimal
  */
-void showMemory(string addr, int N, unsigned char* &mem,
+void showMemory(int addr, int N, unsigned char* &mem,
   const int word_size, const int mem_size)
 {
-  int start = convertHex(addr);
-  if (start < 0 || start >= mem_size)
+  if (addr < 0 || addr >= mem_size)
   {
     cout << "Invalid memory access.\n";
     return;
@@ -316,7 +315,7 @@ void showMemory(string addr, int N, unsigned char* &mem,
   }
   for (int i = 0; i < N; i++)
   {
-    int mem_index = start + i * word_size;
+    int mem_index = addr + i * word_size;
     if (mem_index < 0 || mem_index + word_size - 1 >= mem_size)
     {
       cout << "Memory read out of bounds at address " 
@@ -341,9 +340,9 @@ void showMemory(string addr, int N, unsigned char* &mem,
  * in simulated RISC-V memory
  */
 void execute(long long* &reg, unsigned char* &inst_mem, 
-  unsigned char* &data_mem, const int mem_size, string addr)
+  unsigned char* &data_mem, const int mem_size, int addr)
 {
-  int pc = convertHex(addr); // program counter
+  int pc = addr; // program counter
   if (pc < 0 || pc >= mem_size)
   {
     cout << "Invalid memory access.\n";
@@ -402,7 +401,7 @@ int main()
   {
     string input;
     string command;
-    string address;
+    int address = -1;
     string filename;
     string extra;
     stringstream ss;
@@ -433,19 +432,19 @@ int main()
       cout << "Invalid command.\n";
       continue;
     }
-    else if (command == "help" && address.empty())
+    else if (command == "help" && address == -1)
     {
       printHelpMenu();
       continue;
     }
-    else if (command == "exit" && address.empty())
+    else if (command == "exit" && address == -1)
     {
       exitTyped = true;
       continue;
     }
 
     // commands with address argument: validate address
-    if (validateHex(min(8, (int)address.length()), address).empty())
+    if ((0 > address) || (address >= mem_size))
     {
       cout << "Invalid address.\n";
       continue;

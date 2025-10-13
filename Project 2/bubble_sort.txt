@@ -1,4 +1,4 @@
-45000093 # addi x1, x0, 1104    # start of array is address 450
+1c200093 # addi x1, x0, 450    # start of array is address 450
 00900113 # addi x2, x0, 9       # sorts 10 digits
 00000513 # addi x10, x0, 0      # i = 0, x10 = i
 40a10633 # sub x12, x2, x10     # temp = n - i, x2 = number of elements
@@ -19,7 +19,7 @@ fc000ae3 # beq x0, x0, -44      # jump to start of inner loop, line 5
 40a108b3 # sub x17, x2, x10     # x17 = n - i
 fff88893 # addi x17, x17, -1    # x17 = n - i - 1
 fb104ce3 # blt x0, x17, -72     # go back 17 instructions if i < n - 1
-85000093 # addi x1, x0, 2128    # start of array is address 850
+35200093 # addi x1, x0, 850    # start of array is address 850
 00900113 # addi x2, x0, 9       # sorts 10 digits
 00000513 # addi x10, x0, 0      # i = 0, x10 = i
 40a10633 # sub x12, x2, x10     # temp = n - i, x2 = number of elements
