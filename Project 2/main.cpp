@@ -398,6 +398,10 @@ void showMemory(string addr, int N, unsigned char* &mem,
   }
 }
 
+/**
+ * executes RISC-V instructions starting from the specified address
+ * in simulated RISC-V memory
+ */
 void execute(long long* &reg, unsigned char* &inst_mem, 
   unsigned char* &data_mem, const int mem_size, string addr)
 {
