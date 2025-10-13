@@ -46,7 +46,7 @@ string validateHex(int k, string input)
  * returns false otherwise
  */
 bool importHexFromFile(string filename, string* &hexData, int &counter
-  , int k = 8)
+  , int k)
 {
   ifstream myfile;
   stringstream ss;
@@ -63,7 +63,7 @@ bool importHexFromFile(string filename, string* &hexData, int &counter
     ss.str(line);
     string hexString;
     if (!(ss >> hexString)) break;
-    hexString = validateHex(k, hexString);
+    hexString = validateHex(hexString.length(), hexString);
     if (hexString == "") break;
     data.push_back(hexString);
     counter++;
@@ -82,59 +82,22 @@ bool importHexFromFile(string filename, string* &hexData, int &counter
 }
 
 /**
- * returns true if long long integers are obtained from the filename
- * returns false otherwise
- */
-bool importDataFromFile(string filename, long long* &data, int &counter)
-{
-  ifstream myfile;
-  stringstream ss;
-  string line;
-  vector<long long> vec;
-
-  // check if filename is valid
-  myfile.open(filename);
-  if (!(myfile.is_open())) return false;
-
-  // get lines of data from file
-  while (getline(myfile, line))
-  {
-    ss.str(line);
-    long long value;
-    if (!(ss >> value)) break;
-    vec.push_back(value);
-    counter++;
-    ss.clear();
-  }
-  myfile.close();
-
-  // convert vector to array
-  if (vec.size() == 0) return false;
-  data = new long long[vec.size()];
-  for (int i = 0; i < vec.size(); i++)
-  {
-    data[i] = vec[i];
-  }
-  return true;
-}
-
-/**
- * converts a hexadecimal string to a 32-bit integer corresponding to
+ * converts a hexadecimal string to a 64-bit integer corresponding to
  * the binary representation of the hexadecimal digits
  */
-unsigned int convertHex(const string& input)
+unsigned long long convertHex(const string& input)
 {
-  unsigned int converted = 0;
+  unsigned long long converted = 0;
   int s = input.length();
   for (int i = 0; i < s; i++)
   {
     if (input[i] > '9')  // for letters A-F (10-15)
     {
-      converted |= (input[i] - 'A' + 10) << ((s - i - 1) * 4);
+      converted |= (unsigned long long)(input[i] - 'A' + 10) << ((s - i - 1) * 4);
     }
     else  // for numbers 0-9
     {
-      converted |= (input[i] - '0') << ((s - i - 1) * 4);
+      converted |= (unsigned long long)(input[i] - '0') << ((s - i - 1) * 4);
     }
   }
   return converted;
@@ -176,9 +139,6 @@ void parseInstruction(unsigned int instruction, long long* &reg,
   {
     immSDandB |= 0xFFFFF000;
   }
-
-  // shift ammount for slli
-  int shamt = rs2;
 
   // parse if the instruction is valid and supported
   if (opcode == ADDSUB)
@@ -279,6 +239,8 @@ void parseInstruction(unsigned int instruction, long long* &reg,
   }
   else if (opcode = ADDSLLIFUNCT7 && funct3 == FUNCT3D) // SLLI
   {
+    // shift ammount for slli
+    int shamt = rs2;
     if (rd == 0)
     {
       cout << "Invalid register access.\n";
@@ -326,12 +288,12 @@ void printHelpMenu()
 /**
  * store hexadecimal strings from a file to simulated RISC-V memory
  */
-void loadInstruction(string filename, string addr, 
-  unsigned char* &mem, const int mem_size)
+void loadMemory(string filename, string addr, 
+  unsigned char* &mem, const int word_size, const int mem_size)
 {
   string* hexData = new string[0];
   int counter = 0;
-  if (!importHexFromFile(filename, hexData, counter))
+  if (!importHexFromFile(filename, hexData, counter, word_size * 2))
   {
     cout << "Unable to import valid hex data from "
       << filename << ".\n";
@@ -340,10 +302,10 @@ void loadInstruction(string filename, string addr,
   }
   for (int i = 0; i < counter; i++)
   {
-    unsigned int value = convertHex(hexData[i]);
-    for (int j = 0; j < 4; j++) // store 4 bytes
+    unsigned long long value = convertHex(hexData[i]);
+    for (int j = 0; j < word_size; j++) // store word_size bytes
     {
-      int mem_index = convertHex(addr) + i * 4 + j;
+      int mem_index = convertHex(addr) + i * word_size + j;
       if (mem_index < 0 || mem_index >= mem_size) 
       {
         cout << "Memory write out of bounds at address " << 
@@ -357,42 +319,6 @@ void loadInstruction(string filename, string addr,
   cout << "Data loaded to memory starting at address " 
     << addr << ".\n";
   delete[] hexData;
-}
-
-/**
- * store long long integers from a file to simulated RISC-V memory
- */
-void loadData(string filename, string addr, 
-  unsigned char* &mem, const int mem_size)
-{
-  long long* data = new long long[0];
-  int counter = 0;
-  if (!importDataFromFile(filename, data, counter))
-  {
-    cout << "Unable to import valid hex data from "
-      << filename << ".\n";
-    delete[] data;
-    return;
-  }
-  for (int i = 0; i < counter; i++)
-  {
-    unsigned long long value = data[i];
-    for (int j = 0; j < 8; j++) // store 8 bytes
-    {
-      int mem_index = convertHex(addr) + i * 8 + j;
-      if (mem_index < 0 || mem_index >= mem_size) 
-      {
-        cout << "Memory write out of bounds at address " << 
-          mem_index << ".\n";
-        delete[] data;
-        return;
-      }
-      mem[mem_index] = (value >> (j * 8)) & 0xFF;
-    }
-  }
-  cout << "Data loaded to memory starting at address " 
-    << addr << ".\n";
-  delete[] data;
 }
 
 /**
@@ -573,12 +499,12 @@ int main()
     }
     if (command == "loaddata")
     {
-      loadData(filename, address, data_mem, mem_size);
+      loadMemory(filename, address, data_mem, 8, mem_size);
       continue;
     }
     else if (command == "loadcode")
     {
-      loadInstruction(filename, address, inst_mem, mem_size);
+      loadMemory(filename, address, inst_mem, 4, mem_size);
       continue;
     }
     
