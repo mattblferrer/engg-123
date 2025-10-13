@@ -63,7 +63,7 @@ bool importHexFromFile(string filename, string* &hexData, int &counter
     ss.str(line);
     string hexString;
     if (!(ss >> hexString)) break;
-    hexString = validateHex(hexString.length(), hexString);
+    hexString = validateHex(min(k, (int)hexString.length()), hexString);
     if (hexString == "") break;
     data.push_back(hexString);
     counter++;
@@ -469,7 +469,7 @@ int main()
     }
 
     // commands with address argument: validate address
-    if (validateHex(8, address).empty())
+    if (validateHex(min(8, (int)address.length()), address).empty())
     {
       cout << "Invalid address.\n";
       continue;
