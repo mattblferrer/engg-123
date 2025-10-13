@@ -138,6 +138,7 @@ void parseInstruction(unsigned int instruction, long long* &reg,
   if (immSDandB & (1 << 11))  // sign-extend if negative
   {
     immSDandB |= 0xFFFFF000;
+    immSDandB--;
   }
 
   // parse if the instruction is valid and supported
