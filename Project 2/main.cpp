@@ -146,50 +146,36 @@ void parseInstruction(unsigned int instruction, long long* &reg,
   {
     if (rd == 0)
     {
-      cout << "Invalid register access.\n";
       return;
     }
     if (funct7 == ADDSLLIFUNCT7 && funct3 == FUNCT3A)  // ADD
     {
-      cout << "add x" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
       reg[rd] = reg[rs1] + reg[rs2];
     }
     else if (funct7 == SUBFUNCT7 && funct3 == FUNCT3A)  // SUB
     {
-      cout << "sub x" << rd << ", x" << rs1 << ", x" << rs2 << "\n";
       reg[rd] = reg[rs1] - reg[rs2];
-    }
-    else 
-    {
-      cout << "Cannot be decoded. opcode: " << opcode << ", funct7: " 
-        << funct7 << ", funct3: " << funct3 << "\n";
     }
   }
   else if (opcode == ADDISLLI && funct3 == FUNCT3A)  // ADDI
   {
     if (rd == 0)
     {
-      cout << "Invalid register access.\n";
       return;
     }
-    cout << "addi x" << rd << ", x" << rs1 
-      << ", " << immediate << "\n";
     reg[rd] = reg[rs1] + immediate;
   }
   else if (opcode == LD && funct3 == FUNCT3B)  // LD
   {
     if (rd == 0)
     {
-      cout << "Invalid register access.\n";
       return;
     }
     long long addr = reg[rs1] + immediate; // effective address
     if (addr < 0 || addr + 7 >= mem_size) // valid memory access
     {
-      cout << "Invalid memory access.\n";
       return;
     }
-    cout << "ld x" << rd << ", " << immediate << "(x" << rs1 << ")\n";
     long long value = 0;
     for (int i = 0; i < 8; i++) // load 8 bytes
     {
@@ -201,17 +187,13 @@ void parseInstruction(unsigned int instruction, long long* &reg,
   {
     if (rs2 == 0)
     {
-      cout << "Invalid register access.\n";
       return;
     }
     long long addr = reg[rs1] + immSDandB; // effective address
     if (addr < 0 || addr + 7 >= mem_size) // valid memory access
     {
-      cout << "Invalid memory access.\n";
       return;
     }
-    cout << "sd x" << rs2 << ", " 
-      << immSDandB << "(x" << rs1 << ")\n";
     long long value = reg[rs2]; // value to store
     for (int i = 0; i < 8; i++) // store 8 bytes
     {
@@ -220,8 +202,6 @@ void parseInstruction(unsigned int instruction, long long* &reg,
   }
   else if (opcode == BEQBLT && funct3 == FUNCT3A) // BEQ
   {
-    cout << "beq x" << rs1 << ", x" << rs2 << ", " 
-      << immSDandB << "\n";
     if (reg[rs1] == reg[rs2]) 
     {
       pc += immSDandB;
@@ -230,8 +210,6 @@ void parseInstruction(unsigned int instruction, long long* &reg,
   }
   else if (opcode == BEQBLT && funct3 == FUNCT3C) // BLT
   {
-    cout << "blt x" << rs1 << ", x" << rs2 
-      << ", " << immSDandB << "\n";
     if (reg[rs1] < reg[rs2])
     {
       pc += immSDandB;
@@ -245,16 +223,12 @@ void parseInstruction(unsigned int instruction, long long* &reg,
     int shamt = rs2;
     if (rd == 0)
     {
-      cout << "Invalid register access.\n";
       return;
     }
-    cout << "slli x" << rd << ", x" << rs1 << ", " << shamt << "\n";
     reg[rd] = reg[rs1] << shamt;
   }
   else  // invalid or unsupported instruction
   {
-    cout << "Cannot be decoded. opcode: " << opcode << ", funct7: " 
-      << funct7 << ", funct3: " << funct3 << "\n";
     return;
   }
 }
