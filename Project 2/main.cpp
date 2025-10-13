@@ -144,17 +144,19 @@ unsigned int convertHex(const string& input)
  * parses and executes a RISC-V instruction
  */
 void parseInstruction(unsigned int instruction, long long* &reg, 
-  unsigned char* &mem, const int mem_size)
+  unsigned char* &mem, const int mem_size, int &pc)
 {
   // constants to define instruction types
   const int ADDSUB = 0x33;
   const int ADDI = 0x13;
   const int LD = 0x03;
   const int SD = 0x23;
+  const int BEQBLT = 0x63;
   const int ADDFUNCT7 = 0x00;
   const int SUBFUNCT7 = 0x20;
-  const int FUNCT3A = 0x00;  // for ADD, SUB, ADDI
+  const int FUNCT3A = 0x00;  // for ADD, SUB, ADDI, BEQ
   const int FUNCT3B = 0x03;  // for LD, SD
+  const int FUNCT3C = 0x04; // for BLT
 
   // calculate fields of instruction using bitmasks
   int funct7 = (instruction & (0x7F << 25)) >> 25;
@@ -165,13 +167,13 @@ void parseInstruction(unsigned int instruction, long long* &reg,
   int opcode = (instruction & 0x7F);
   int immediate = (int)instruction >> 20;
 
-  // immediate bits for SD instruction
+  // immediate bits for SD, BEQ, and BLT instructions
   int imm11_5 = funct7;
   int imm4_0 = rd;
-  int immSD = (imm11_5 << 5) | imm4_0;
-  if (immSD & (1 << 11))  // sign-extend if negative
+  int immSDandB = (imm11_5 << 5) | imm4_0;
+  if (immSDandB & (1 << 11))  // sign-extend if negative
   {
-    immSD |= 0xFFFFF000;
+    immSDandB |= 0xFFFFF000;
   }
 
   // parse if the instruction is valid and supported
@@ -237,18 +239,38 @@ void parseInstruction(unsigned int instruction, long long* &reg,
       cout << "Invalid register access.\n";
       return;
     }
-    long long addr = reg[rs1] + immSD; // effective address
+    long long addr = reg[rs1] + immSDandB; // effective address
     if (addr < 0 || addr + 7 >= mem_size) // valid memory access
     {
       cout << "Invalid memory access.\n";
       return;
     }
     cout << "sd x" << rs2 << ", " 
-      << immSD << "(x" << rs1 << ")\n";
+      << immSDandB << "(x" << rs1 << ")\n";
     long long value = reg[rs2]; // value to store
     for (int i = 0; i < 8; i++) // store 8 bytes
     {
       mem[addr + i] = (value >> (i * 8)) & 0xFF;
+    }
+  }
+  else if (opcode == BEQBLT && funct3 == FUNCT3A) // BEQ
+  {
+    cout << "beq x" << rs1 << ", x" << rs2 << ", " 
+      << immSDandB << "\n";
+    if (reg[rs1] == reg[rs2]) 
+    {
+      pc += immSDandB;
+      return;
+    }
+  }
+  else if (opcode == BEQBLT && funct3 == FUNCT3C) // BLT
+  {
+    cout << "blt x" << rs1 << ", x" << rs2 
+      << ", " << immSDandB << "\n";
+    if (reg[rs1] < reg[rs2])
+    {
+      pc += immSDandB;
+      return;
     }
   }
   else  // invalid or unsupported instruction
@@ -429,7 +451,7 @@ void execute(long long* &reg, unsigned char* &inst_mem,
       cout << "Halt instruction encountered. Stopping execution.\n";
       return;
     }
-    parseInstruction(instruction, reg, data_mem, mem_size);
+    parseInstruction(instruction, reg, data_mem, mem_size, pc);
     pc += 4; // move to next instruction
   }
 }
