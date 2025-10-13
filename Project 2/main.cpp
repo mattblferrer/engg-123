@@ -375,8 +375,6 @@ void execute(long long* &reg, unsigned char* &inst_mem,
     cout << "Invalid memory access.\n";
     return;
   }
-  reg[1] = convertHex(addr);
-  reg[2] = 10; // sorts 10 digits
   while (true)
   {
     if (pc < 0 || pc + 3 >= mem_size)
