@@ -19,7 +19,8 @@ using namespace std;
 struct Instruction
 {
   string code;
-  int arg1, arg2, arg3;
+  long long arg1, arg2, arg3;
+  int rd;
 };
 
 /**
@@ -249,7 +250,7 @@ unsigned int instructionFetch(const int pc, const int mem_size,
  * decodes the fetched instruction and reads the necessary registers
  */
 Instruction instructionDecode(unsigned int instruction, 
-  long long* &reg, unsigned char* &mem, const int mem_size, int &pc)
+  long long* &reg)
 {
   // initialize instruction
   Instruction inst;
@@ -257,6 +258,7 @@ Instruction instructionDecode(unsigned int instruction,
   inst.arg1 = -1;
   inst.arg2 = -1;
   inst.arg3 = -1;
+  inst.rd = -1;
 
   // constants to define instruction types
   const int ADDSUB = 0x33;
@@ -280,6 +282,8 @@ Instruction instructionDecode(unsigned int instruction,
   int funct3 = (instruction & (0x7 << 12)) >> 12;  // 3 bits
   int rd = (instruction & (0x1F << 7)) >> 7;  // 5 bits
 
+  inst.rd = rd; // store rd for write back stage
+
   // immediate bits for SD, BEQ, and BLT instructions
   int imm11_5 = funct7;
   int imm4_0 = rd;
@@ -296,60 +300,60 @@ Instruction instructionDecode(unsigned int instruction,
     if (funct7 == ADDSLLIFUNCT7 && funct3 == FUNCT3A)  // ADD
     {
       inst.code = "ADD";
-      inst.arg1 = rd;
-      inst.arg2 = rs1;
-      inst.arg3 = rs2;
+      inst.arg1 = reg[rd];
+      inst.arg2 = reg[rs1];
+      inst.arg3 = reg[rs2];
     }
     else if (funct7 == SUBFUNCT7 && funct3 == FUNCT3A)  // SUB
     {
       inst.code = "SUB";
-      inst.arg1 = rd;
-      inst.arg2 = rs1;
-      inst.arg3 = rs2;
+      inst.arg1 = reg[rd];
+      inst.arg2 = reg[rs1];
+      inst.arg3 = reg[rs2];
     }
   }
   else if (opcode == ADDISLLI && funct3 == FUNCT3A)  // ADDI
   {
     inst.code = "ADDI";
-    inst.arg1 = rd;
-    inst.arg2 = rs1;
+    inst.arg1 = reg[rd];
+    inst.arg2 = reg[rs1];
     inst.arg3 = immediate;
   }
   else if (opcode == LD && funct3 == FUNCT3B)  // LD
   {
     inst.code = "LD";
-    inst.arg1 = rd;
-    inst.arg2 = rs1;
+    inst.arg1 = reg[rd];
+    inst.arg2 = reg[rs1];
     inst.arg3 = immediate;
   }
   else if (opcode == SD && funct3 == FUNCT3B)  // SD
   {
     inst.code = "SD";
-    inst.arg1 = rs1;
-    inst.arg2 = rs2;
+    inst.arg1 = reg[rs1];
+    inst.arg2 = reg[rs2];
     inst.arg3 = immSDandB;
   }
   else if (opcode == BEQBLT && funct3 == FUNCT3A) // BEQ
   {
     inst.code = "BEQ";
-    inst.arg1 = rs1;
-    inst.arg2 = rs2;
+    inst.arg1 = reg[rs1];
+    inst.arg2 = reg[rs2];
     inst.arg3 = immSDandB;
   }
   else if (opcode == BEQBLT && funct3 == FUNCT3C) // BLT
   {
     inst.code = "BLT";
-    inst.arg1 = rs1;
-    inst.arg2 = rs2;
+    inst.arg1 = reg[rs1];
+    inst.arg2 = reg[rs2];
     inst.arg3 = immSDandB;
   }
   else if (opcode == ADDISLLI && funct7 == ADDSLLIFUNCT7 
     && funct3 == FUNCT3D) // SLLI
   {
     inst.code = "SLLI";
-    inst.arg1 = rd;
-    inst.arg2 = rs1;
-    inst.arg3 = rs2;
+    inst.arg1 = reg[rd];
+    inst.arg2 = reg[rs1];
+    inst.arg3 = reg[rs2];
   }
   return inst;
 }
@@ -357,8 +361,7 @@ Instruction instructionDecode(unsigned int instruction,
 /**
  * executes instructions 
  */
-void instructionExecute(Instruction &inst, long long* &reg, 
-  unsigned char* &mem, const int mem_size, int& pc)
+void instructionExecute(Instruction &inst, int& pc)
 { 
   if (inst.code == "NOP")
   {
@@ -372,7 +375,7 @@ void instructionExecute(Instruction &inst, long long* &reg,
       pc += 4;
       return;
     }
-    reg[inst.arg1] = reg[inst.arg2] + reg[inst.arg3];
+    inst.arg1 = inst.arg2 + inst.arg3;
     pc += 4;
   }
   else if (inst.code == "SUB")
@@ -382,7 +385,7 @@ void instructionExecute(Instruction &inst, long long* &reg,
       pc += 4;
       return;
     }
-    reg[inst.arg1] = reg[inst.arg2] - reg[inst.arg3];
+    inst.arg1 = inst.arg2 - inst.arg3;
     pc += 4;
   }
   else if (inst.code == "ADDI")
@@ -392,12 +395,44 @@ void instructionExecute(Instruction &inst, long long* &reg,
       pc += 4;
       return;
     }
-    reg[inst.arg1] = reg[inst.arg2] + inst.arg3;
+    inst.arg1 = inst.arg2 + inst.arg3;
     pc += 4;
   }
-  else if (inst.code == "LD")
+  else if (inst.code == "BEQ")
   {
-    long long addr = reg[inst.arg2] + inst.arg3; // effective address
+    if (inst.arg1 == inst.arg2) 
+    {
+      pc += inst.arg3 + 4;
+      return;
+    }
+    pc += 4;
+  }
+  else if (inst.code == "BLT")
+  {
+    if (inst.arg1 < inst.arg2)
+    {
+      pc += inst.arg3 + 4;
+      return;
+    }
+    pc += 4;
+  }
+  else if (inst.code == "SLLI")
+  {
+    int shamt = inst.arg3; // shift amount for slli
+    inst.arg1 = inst.arg2 << shamt;
+    pc += 4;
+  }
+}
+
+/**
+ * memory operands are read and written from/to memory
+ */
+void memoryAccess(Instruction &inst, long long* &reg, 
+  unsigned char* &mem, const int mem_size, int& pc)
+{
+  if (inst.code == "LD")
+  {
+    long long addr = inst.arg2 + inst.arg3; // effective address
     if (addr < 0 || addr + 7 >= mem_size) // valid memory access
     {
       pc += 4;
@@ -408,64 +443,40 @@ void instructionExecute(Instruction &inst, long long* &reg,
     {
       value |= ((long long)mem[addr + i]) << (i * 8);
     }
-    reg[inst.arg1] = value;
+    inst.arg1 = value;
     pc += 4;
   }
   else if (inst.code == "SD")
   {
-    long long addr = reg[inst.arg1] + inst.arg3; // effective address
+    long long addr = inst.arg1 + inst.arg3; // effective address
     if (addr < 0 || addr + 7 >= mem_size) // valid memory access
     {
       pc += 4;
       return;
     }
-    long long value = reg[inst.arg2]; // value to store
+    long long value = inst.arg2; // value to store
     for (int i = 0; i < 8; i++) // store 8 bytes
     {
       mem[addr + i] = (value >> (i * 8)) & 0xFF;
     }
     pc += 4;
   }
-  else if (inst.code == "BEQ")
-  {
-    if (reg[inst.arg1] == reg[inst.arg2]) 
-    {
-      pc += inst.arg3 + 4;
-      return;
-    }
-    pc += 4;
-  }
-  else if (inst.code == "BLT")
-  {
-    if (reg[inst.arg1] < reg[inst.arg2])
-    {
-      pc += inst.arg3 + 4;
-      return;
-    }
-    pc += 4;
-  }
-  else if (inst.code == "SLLI")
-  {
-    int shamt = inst.arg3; // shift amount for slli
-    reg[inst.arg1] = reg[inst.arg2] << shamt;
-    pc += 4;
-  }
-}
-
-/**
- * memory operands are read and written from/to memory
- */
-void memoryAccess()
-{
-
 }
 
 /**
  * computed value is written to the register
  */
-void writeBack()
+void writeBack(Instruction &inst, long long* &reg)
 {
+  // if sd, beq, or blt, no write back needed
+  if (inst.code == "SD" || inst.code == "BEQ" || 
+    inst.code == "BLT" || inst.code == "NOP")
+  {
+    return;
+  }
   
+  reg[inst.rd] = inst.arg1;
+  return;
 }
 
 /**
@@ -483,11 +494,10 @@ void programLoop(long long* &reg, unsigned char* &inst_mem,
     {
       return;
     }
-    Instruction inst = instructionDecode(instruction, reg, data_mem, 
-      mem_size, pc);
-    instructionExecute(inst, reg, data_mem, mem_size, pc);
-    memoryAccess();
-    writeBack();
+    Instruction inst = instructionDecode(instruction, reg);
+    instructionExecute(inst, pc);
+    memoryAccess(inst, reg, data_mem, mem_size, pc);
+    writeBack(inst, reg);
   }
 }
 
