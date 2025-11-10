@@ -371,6 +371,47 @@ void execute(long long* &reg, unsigned char* &inst_mem,
   }
 }
 
+/**
+ * fetches instructions from the address in the memory location whose
+ * value is stored in the program counter
+ */
+void instruction_fetch()
+{
+
+}
+
+/**
+ * decodes the fetched instruction and reads the necessary registers
+ */
+void instruction_decode()
+{
+
+}
+
+/**
+ * executes instructions 
+ */
+void instruction_execute()
+{
+
+}
+
+/**
+ * memory operands are read and written from/to memory
+ */
+void memory_access()
+{
+
+}
+
+/**
+ * computed value is written to the register
+ */
+void write_back()
+{
+  
+}
+
 int main()
 {
   bool exitTyped = false;
