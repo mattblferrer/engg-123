@@ -69,7 +69,8 @@ bool importHexFromFile(string filename, string* &hexData, int &counter
     ss.str(line);
     string hexString;
     if (!(ss >> hexString)) break;
-    hexString = validateHex(min(k, (int)hexString.length()), hexString);
+    hexString = validateHex(min(k, (int)hexString.length()), 
+      hexString);
     if (hexString == "") break;
     data.push_back(hexString);
     counter++;
@@ -99,144 +100,16 @@ unsigned long long convertHex(const string& input)
   {
     if (input[i] > '9')  // for letters A-F (10-15)
     {
-      converted |= (unsigned long long)(input[i] - 'A' + 10) << ((s - i - 1) * 4);
+      converted |= (unsigned long long)(input[i] - 'A' + 10) << 
+        ((s - i - 1) * 4);
     }
     else  // for numbers 0-9
     {
-      converted |= (unsigned long long)(input[i] - '0') << ((s - i - 1) * 4);
+      converted |= (unsigned long long)(input[i] - '0') << 
+        ((s - i - 1) * 4);
     }
   }
   return converted;
-}
-
-/**
- * parses and executes a RISC-V instruction
- */
-void parseInstruction(unsigned int instruction, long long* &reg, 
-  unsigned char* &mem, const int mem_size, int &pc)
-{
-  // constants to define instruction types
-  const int ADDSUB = 0x33;
-  const int ADDISLLI = 0x13;
-  const int LD = 0x03;
-  const int SD = 0x23;
-  const int BEQBLT = 0x63;
-  const int ADDSLLIFUNCT7 = 0x00; 
-  const int SUBFUNCT7 = 0x20;
-  const int FUNCT3A = 0x00;  // for ADD, SUB, ADDI, BEQ
-  const int FUNCT3B = 0x03;  // for LD, SD
-  const int FUNCT3C = 0x04; // for BLT
-  const int FUNCT3D = 0x01; // for SLLI
-
-  // calculate fields of instruction using bitmasks
-  int funct7 = (instruction & (0x7F << 25)) >> 25;  // 7 bits
-  int rs2 = (instruction & (0x1F << 20)) >> 20;  // 5 bits
-  int rs1 = (instruction & (0x1F << 15)) >> 15;  // 5 bits
-  int funct3 = (instruction & (0x7 << 12)) >> 12;  // 3 bits
-  int rd = (instruction & (0x1F << 7)) >> 7;  // 5 bits
-  int opcode = (instruction & 0x7F);  // 7 bits
-  int immediate = (int)instruction >> 20;
-
-  // immediate bits for SD, BEQ, and BLT instructions
-  int imm11_5 = funct7;
-  int imm4_0 = rd;
-  int immSDandB = (imm11_5 << 5) | imm4_0;
-  if (immSDandB & (1 << 11))  // sign-extend if negative
-  {
-    immSDandB |= 0xFFFFF000;
-    immSDandB--;
-  }
-
-  // parse if the instruction is valid and supported
-  if (opcode == ADDSUB)
-  {
-    if (rd == 0)
-    {
-      return;
-    }
-    if (funct7 == ADDSLLIFUNCT7 && funct3 == FUNCT3A)  // ADD
-    {
-      reg[rd] = reg[rs1] + reg[rs2];
-    }
-    else if (funct7 == SUBFUNCT7 && funct3 == FUNCT3A)  // SUB
-    {
-      reg[rd] = reg[rs1] - reg[rs2];
-    }
-  }
-  else if (opcode == ADDISLLI && funct3 == FUNCT3A)  // ADDI
-  {
-    if (rd == 0)
-    {
-      return;
-    }
-    reg[rd] = reg[rs1] + immediate;
-  }
-  else if (opcode == LD && funct3 == FUNCT3B)  // LD
-  {
-    if (rd == 0)
-    {
-      return;
-    }
-    long long addr = reg[rs1] + immediate; // effective address
-    if (addr < 0 || addr + 7 >= mem_size) // valid memory access
-    {
-      return;
-    }
-    long long value = 0;
-    for (int i = 0; i < 8; i++) // load 8 bytes
-    {
-      value |= ((long long)mem[addr + i]) << (i * 8);
-    }
-    reg[rd] = value;
-  }
-  else if (opcode == SD && funct3 == FUNCT3B)  // SD
-  {
-    if (rs2 == 0)
-    {
-      return;
-    }
-    long long addr = reg[rs1] + immSDandB; // effective address
-    if (addr < 0 || addr + 7 >= mem_size) // valid memory access
-    {
-      return;
-    }
-    long long value = reg[rs2]; // value to store
-    for (int i = 0; i < 8; i++) // store 8 bytes
-    {
-      mem[addr + i] = (value >> (i * 8)) & 0xFF;
-    }
-  }
-  else if (opcode == BEQBLT && funct3 == FUNCT3A) // BEQ
-  {
-    if (reg[rs1] == reg[rs2]) 
-    {
-      pc += immSDandB;
-      return;
-    }
-  }
-  else if (opcode == BEQBLT && funct3 == FUNCT3C) // BLT
-  {
-    if (reg[rs1] < reg[rs2])
-    {
-      pc += immSDandB;
-      return;
-    }
-  }
-  else if (opcode == ADDISLLI && funct7 == ADDSLLIFUNCT7 
-    && funct3 == FUNCT3D) // SLLI
-  {
-    // shift ammount for slli
-    int shamt = rs2;
-    if (rd == 0)
-    {
-      return;
-    }
-    reg[rd] = reg[rs1] << shamt;
-  }
-  else  // invalid or unsupported instruction
-  {
-    return;
-  }
 }
 
 /**
@@ -375,8 +248,8 @@ unsigned int instructionFetch(const int pc, const int mem_size,
 /**
  * decodes the fetched instruction and reads the necessary registers
  */
-Instruction instructionDecode(unsigned int instruction, long long* &reg, 
-  unsigned char* &mem, const int mem_size, int &pc)
+Instruction instructionDecode(unsigned int instruction, 
+  long long* &reg, unsigned char* &mem, const int mem_size, int &pc)
 {
   // initialize instruction
   Instruction inst;
@@ -486,8 +359,97 @@ Instruction instructionDecode(unsigned int instruction, long long* &reg,
  */
 void instructionExecute(Instruction &inst, long long* &reg, 
   unsigned char* &mem, const int mem_size, int& pc)
-{
-
+{ 
+  if (inst.code == "NOP")
+  {
+    pc += 4;
+    return;
+  }
+  if (inst.code == "ADD")
+  {
+    if (inst.arg1 == 0)
+    {
+      pc += 4;
+      return;
+    }
+    reg[inst.arg1] = reg[inst.arg2] + reg[inst.arg3];
+    pc += 4;
+  }
+  else if (inst.code == "SUB")
+  {
+    if (inst.arg1 == 0)
+    {
+      pc += 4;
+      return;
+    }
+    reg[inst.arg1] = reg[inst.arg2] - reg[inst.arg3];
+    pc += 4;
+  }
+  else if (inst.code == "ADDI")
+  {
+    if (inst.arg1 == 0)
+    {
+      pc += 4;
+      return;
+    }
+    reg[inst.arg1] = reg[inst.arg2] + inst.arg3;
+    pc += 4;
+  }
+  else if (inst.code == "LD")
+  {
+    long long addr = reg[inst.arg2] + inst.arg3; // effective address
+    if (addr < 0 || addr + 7 >= mem_size) // valid memory access
+    {
+      pc += 4;
+      return;
+    }
+    long long value = 0;
+    for (int i = 0; i < 8; i++) // load 8 bytes
+    {
+      value |= ((long long)mem[addr + i]) << (i * 8);
+    }
+    reg[inst.arg1] = value;
+    pc += 4;
+  }
+  else if (inst.code == "SD")
+  {
+    long long addr = reg[inst.arg1] + inst.arg3; // effective address
+    if (addr < 0 || addr + 7 >= mem_size) // valid memory access
+    {
+      pc += 4;
+      return;
+    }
+    long long value = reg[inst.arg2]; // value to store
+    for (int i = 0; i < 8; i++) // store 8 bytes
+    {
+      mem[addr + i] = (value >> (i * 8)) & 0xFF;
+    }
+    pc += 4;
+  }
+  else if (inst.code == "BEQ")
+  {
+    if (reg[inst.arg1] == reg[inst.arg2]) 
+    {
+      pc += inst.arg3 + 4;
+      return;
+    }
+    pc += 4;
+  }
+  else if (inst.code == "BLT")
+  {
+    if (reg[inst.arg1] < reg[inst.arg2])
+    {
+      pc += inst.arg3 + 4;
+      return;
+    }
+    pc += 4;
+  }
+  else if (inst.code == "SLLI")
+  {
+    int shamt = inst.arg3; // shift amount for slli
+    reg[inst.arg1] = reg[inst.arg2] << shamt;
+    pc += 4;
+  }
 }
 
 /**
