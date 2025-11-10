@@ -339,7 +339,7 @@ void showMemory(int addr, int N, unsigned char* &mem,
  * executes RISC-V instructions starting from the specified address
  * in simulated RISC-V memory
  */
-void execute(long long* &reg, unsigned char* &inst_mem, 
+void programLoop(long long* &reg, unsigned char* &inst_mem, 
   unsigned char* &data_mem, const int mem_size, int addr)
 {
   int pc = addr; // program counter
@@ -444,14 +444,14 @@ int main()
     }
 
     // commands with address argument: validate address
-    if ((0 > address) || (address >= mem_size))
+    if ((address < 0) || (address >= mem_size))
     {
       cout << "Invalid address.\n";
       continue;
     }
     if (command == "exec")
     {
-      execute(reg, inst_mem, data_mem, mem_size, address);
+      programLoop(reg, inst_mem, data_mem, mem_size, address);
       continue;
     }
     else if (command == "showdata")
