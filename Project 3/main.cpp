@@ -16,11 +16,26 @@
 
 using namespace std;
 
+/**
+ * structure to hold decoded instruction information
+ */
 struct Instruction
 {
   string code;
   long long arg1, arg2, arg3;
   int rd;
+};
+
+/**
+ * structures to hold what each stage of the pipeline passes
+ * to the next stage
+ *
+ */
+struct Stage
+{
+  Instruction inst;
+  int pc;
+  bool valid = false;
 };
 
 /**
@@ -486,18 +501,64 @@ void writeBack(Instruction &inst, long long* &reg)
 void programLoop(long long* &reg, unsigned char* &inst_mem, 
   unsigned char* &data_mem, const int mem_size, int& pc)
 {
-  while (true)
+  // pipeline registers for simulation
+  Stage if_id;
+  Stage id_ex;
+  Stage ex_mem;
+  Stage mem_wb;
+
+  unsigned int instruction;
+  bool running = true;
+
+  while (running)
   {
-    unsigned int instruction = instructionFetch(pc, mem_size, 
-      inst_mem);
+    if (mem_wb.valid) // Stage 5: Write Back
+    {
+      writeBack(mem_wb.inst, reg);
+    }
+    if (ex_mem.valid) // Stage 4: Memory Access
+    {
+      memoryAccess(ex_mem.inst, reg, data_mem, mem_size, pc);
+      mem_wb.inst = ex_mem.inst;
+      mem_wb.valid = true;
+    }
+    else
+    {
+      mem_wb.valid = false;
+    }
+    if (id_ex.valid) // Stage 3: Execute Instruction
+    {
+      instructionExecute(id_ex.inst, pc);
+      ex_mem.inst = id_ex.inst;
+      ex_mem.pc = id_ex.pc;
+      ex_mem.valid = true;
+    }
+    else
+    {
+      ex_mem.valid = false;
+    }
+    if (if_id.valid) // Stage 2: Decode Instruction
+    {
+      id_ex.inst = instructionDecode(instruction, reg);
+      id_ex.pc = if_id.pc;
+      id_ex.valid = true;
+    }
+    else
+    {
+      id_ex.valid = false;
+    }
+    instruction = instructionFetch(pc, mem_size, 
+      inst_mem); // Stage 1: Fetch Instruction
     if (instruction == 0) // halt on instruction of all zeros
     {
-      return;
+      running = false;
+      if_id.valid = false;
     }
-    Instruction inst = instructionDecode(instruction, reg);
-    instructionExecute(inst, pc);
-    memoryAccess(inst, reg, data_mem, mem_size, pc);
-    writeBack(inst, reg);
+    else
+    {
+      if_id.pc = pc;
+      if_id.valid = true;
+    }
   }
 }
 
