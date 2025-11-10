@@ -16,6 +16,12 @@
 
 using namespace std;
 
+struct Instruction
+{
+  string code;
+  int arg1, arg2, arg3;
+};
+
 /**
  * takes an input fixed length k hex string and validates - returns 
  * the string if valid, empty string otherwise
@@ -336,62 +342,150 @@ void showMemory(int addr, int N, unsigned char* &mem,
 }
 
 /**
- * executes RISC-V instructions starting from the specified address
- * in simulated RISC-V memory
- */
-void programLoop(long long* &reg, unsigned char* &inst_mem, 
-  unsigned char* &data_mem, const int mem_size, int addr)
-{
-  int pc = addr; // program counter
-  if (pc < 0 || pc >= mem_size)
-  {
-    cout << "Invalid memory access.\n";
-    return;
-  }
-  while (true)
-  {
-    if (pc < 0 || pc + 3 >= mem_size)
-    {
-      cout << "Memory read out of bounds at address " 
-        << pc << ".\n";
-      return;
-    }
-    unsigned int instruction = 0;
-    for (int i = 0; i < 4; i++) // load 4 bytes
-    {
-      instruction |= ((unsigned int)inst_mem[pc + i]) << (i * 8);
-    }
-    if (instruction == 0) // halt on instruction of all zeros
-    {
-      cout << "Halt instruction encountered. Stopping execution.\n";
-      return;
-    }
-    parseInstruction(instruction, reg, data_mem, mem_size, pc);
-    pc += 4; // move to next instruction
-  }
-}
-
-/**
  * fetches instructions from the address in the memory location whose
  * value is stored in the program counter
  */
-void instruction_fetch()
+unsigned int instructionFetch(const int pc, const int mem_size, 
+  unsigned char* &inst_mem)
 {
-
+  if (pc < 0 || pc >= mem_size)
+  {
+    cout << "Invalid memory access.\n";
+    return 0;
+  }
+  if (pc < 0 || pc + 3 >= mem_size)
+  {
+    cout << "Memory read out of bounds at address " 
+      << pc << ".\n";
+    return 0;
+  }
+  unsigned int instruction = 0;
+  for (int i = 0; i < 4; i++) // load 4 bytes
+  {
+    instruction |= ((unsigned int)inst_mem[pc + i]) << (i * 8);
+  }
+  if (instruction == 0) // halt on instruction of all zeros
+  {
+    cout << "Halt instruction encountered. Stopping execution.\n";
+    return 0;
+  }
+  return instruction;
 }
 
 /**
  * decodes the fetched instruction and reads the necessary registers
  */
-void instruction_decode()
+Instruction instructionDecode(unsigned int instruction, long long* &reg, 
+  unsigned char* &mem, const int mem_size, int &pc)
 {
+  // initialize instruction
+  Instruction inst;
+  inst.code = "NOP";
+  inst.arg1 = -1;
+  inst.arg2 = -1;
+  inst.arg3 = -1;
 
+  // constants to define instruction types
+  const int ADDSUB = 0x33;
+  const int ADDISLLI = 0x13;
+  const int LD = 0x03;
+  const int SD = 0x23;
+  const int BEQBLT = 0x63;
+  const int ADDSLLIFUNCT7 = 0x00; 
+  const int SUBFUNCT7 = 0x20;
+  const int FUNCT3A = 0x00;  // for ADD, SUB, ADDI, BEQ
+  const int FUNCT3B = 0x03;  // for LD, SD
+  const int FUNCT3C = 0x04; // for BLT
+  const int FUNCT3D = 0x01; // for SLLI
+
+  // calculate fields of instruction using bitmasks
+  int opcode = (instruction & 0x7F);  // 7 bits
+  int immediate = (int)instruction >> 20;
+  int funct7 = (instruction & (0x7F << 25)) >> 25;  // 7 bits
+  int rs2 = (instruction & (0x1F << 20)) >> 20;  // 5 bits
+  int rs1 = (instruction & (0x1F << 15)) >> 15;  // 5 bits
+  int funct3 = (instruction & (0x7 << 12)) >> 12;  // 3 bits
+  int rd = (instruction & (0x1F << 7)) >> 7;  // 5 bits
+
+  // immediate bits for SD, BEQ, and BLT instructions
+  int imm11_5 = funct7;
+  int imm4_0 = rd;
+  int immSDandB = (imm11_5 << 5) | imm4_0;
+  if (immSDandB & (1 << 11))  // sign-extend if negative
+  {
+    immSDandB |= 0xFFFFF000;
+    immSDandB--;
+  }
+
+  // parse if the instruction is valid and supported
+  if (opcode == ADDSUB)
+  {
+    if (funct7 == ADDSLLIFUNCT7 && funct3 == FUNCT3A)  // ADD
+    {
+      inst.code = "ADD";
+      inst.arg1 = rd;
+      inst.arg2 = rs1;
+      inst.arg3 = rs2;
+    }
+    else if (funct7 == SUBFUNCT7 && funct3 == FUNCT3A)  // SUB
+    {
+      inst.code = "SUB";
+      inst.arg1 = rd;
+      inst.arg2 = rs1;
+      inst.arg3 = rs2;
+    }
+  }
+  else if (opcode == ADDISLLI && funct3 == FUNCT3A)  // ADDI
+  {
+    inst.code = "ADDI";
+    inst.arg1 = rd;
+    inst.arg2 = rs1;
+    inst.arg3 = immediate;
+  }
+  else if (opcode == LD && funct3 == FUNCT3B)  // LD
+  {
+    inst.code = "LD";
+    inst.arg1 = rd;
+    inst.arg2 = rs1;
+    inst.arg3 = immediate;
+  }
+  else if (opcode == SD && funct3 == FUNCT3B)  // SD
+  {
+    inst.code = "SD";
+    inst.arg1 = rs1;
+    inst.arg2 = rs2;
+    inst.arg3 = immSDandB;
+  }
+  else if (opcode == BEQBLT && funct3 == FUNCT3A) // BEQ
+  {
+    inst.code = "BEQ";
+    inst.arg1 = rs1;
+    inst.arg2 = rs2;
+    inst.arg3 = immSDandB;
+  }
+  else if (opcode == BEQBLT && funct3 == FUNCT3C) // BLT
+  {
+    inst.code = "BLT";
+    inst.arg1 = rs1;
+    inst.arg2 = rs2;
+    inst.arg3 = immSDandB;
+  }
+  else if (opcode == ADDISLLI && funct7 == ADDSLLIFUNCT7 
+    && funct3 == FUNCT3D) // SLLI
+  {
+    inst.code = "SLLI";
+    inst.arg1 = rd;
+    inst.arg2 = rs1;
+    inst.arg3 = rs2;
+  }
+  return inst;
 }
 
 /**
  * executes instructions 
  */
-void instruction_execute()
+void instructionExecute(Instruction &inst, long long* &reg, 
+  unsigned char* &mem, const int mem_size, int& pc)
 {
 
 }
@@ -399,7 +493,7 @@ void instruction_execute()
 /**
  * memory operands are read and written from/to memory
  */
-void memory_access()
+void memoryAccess()
 {
 
 }
@@ -407,9 +501,32 @@ void memory_access()
 /**
  * computed value is written to the register
  */
-void write_back()
+void writeBack()
 {
   
+}
+
+/**
+ * executes RISC-V instructions starting from the specified address
+ * in simulated RISC-V memory
+ */
+void programLoop(long long* &reg, unsigned char* &inst_mem, 
+  unsigned char* &data_mem, const int mem_size, int& pc)
+{
+  while (true)
+  {
+    unsigned int instruction = instructionFetch(pc, mem_size, 
+      inst_mem);
+    if (instruction == 0) // halt on instruction of all zeros
+    {
+      return;
+    }
+    Instruction inst = instructionDecode(instruction, reg, data_mem, 
+      mem_size, pc);
+    instructionExecute(inst, reg, data_mem, mem_size, pc);
+    memoryAccess();
+    writeBack();
+  }
 }
 
 int main()
