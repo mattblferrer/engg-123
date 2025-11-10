@@ -509,6 +509,7 @@ void programLoop(long long* &reg, unsigned char* &inst_mem,
 
   unsigned int instruction;
   bool running = true;
+  bool haltFetched = false;
 
   while (running)
   {
@@ -551,13 +552,19 @@ void programLoop(long long* &reg, unsigned char* &inst_mem,
       inst_mem); // Stage 1: Fetch Instruction
     if (instruction == 0) // halt on instruction of all zeros
     {
-      running = false;
+      haltFetched = true;
       if_id.valid = false;
     }
     else
     {
       if_id.pc = pc;
       if_id.valid = true;
+    }
+    // check if pipeline is empty and halt was fetched
+    if (haltFetched && !if_id.valid && !id_ex.valid && 
+      !ex_mem.valid && !mem_wb.valid)
+    {
+      running = false;
     }
   }
 }
