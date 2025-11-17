@@ -234,7 +234,7 @@ void showMemory(int addr, int N, unsigned char* &mem,
  * fetches instructions from the address in the memory location whose
  * value is stored in the program counter
  */
-unsigned int instructionFetch(const int pc, const int mem_size, 
+unsigned int instructionFetch(int& pc, const int mem_size, 
   unsigned char* &inst_mem)
 {
   if (pc < 0 || pc >= mem_size)
@@ -258,6 +258,7 @@ unsigned int instructionFetch(const int pc, const int mem_size,
     cout << "Halt instruction encountered. Stopping execution.\n";
     return 0;
   }
+  pc += 4;
   return instruction;
 }
 
@@ -388,48 +389,40 @@ void instructionExecute(Instruction &inst, int& pc)
 { 
   if (inst.code == "NOP")
   {
-    pc += 4;
     return;
   }
   if (inst.code == "ADD")
   {
-    if (inst.arg1 == 0)
+    if (inst.rd == 0)
     {
-      pc += 4;
+
       return;
     }
     inst.arg1 = inst.arg2 + inst.arg3;
-    pc += 4;
   }
   else if (inst.code == "SUB")
   {
-    if (inst.arg1 == 0)
+    if (inst.rd == 0)
     {
-      pc += 4;
       return;
     }
     inst.arg1 = inst.arg2 - inst.arg3;
-    pc += 4;
   }
   else if (inst.code == "MUL")
   {
-    if (inst.arg1 == 0)
+    if (inst.rd == 0)
     {
-      pc += 4;
       return;
     }
     inst.arg1 = inst.arg2 * inst.arg3;
-    pc += 4;
   }
   else if (inst.code == "ADDI")
   {
-    if (inst.arg1 == 0)
+    if (inst.rd == 0)
     {
-      pc += 4;
       return;
     }
     inst.arg1 = inst.arg2 + inst.arg3;
-    pc += 4;
   }
   else if (inst.code == "BEQ")
   {
@@ -438,7 +431,6 @@ void instructionExecute(Instruction &inst, int& pc)
       pc += inst.arg3 + 4;
       return;
     }
-    pc += 4;
   }
   else if (inst.code == "BLT")
   {
@@ -447,13 +439,11 @@ void instructionExecute(Instruction &inst, int& pc)
       pc += inst.arg3 + 4;
       return;
     }
-    pc += 4;
   }
   else if (inst.code == "SLLI")
   {
     int shamt = inst.arg3; // shift amount for slli
     inst.arg1 = inst.arg2 << shamt;
-    pc += 4;
   }
 }
 
@@ -468,7 +458,6 @@ void memoryAccess(Instruction &inst, long long* &reg,
     long long addr = inst.arg2 + inst.arg3; // effective address
     if (addr < 0 || addr + 7 >= mem_size) // valid memory access
     {
-      pc += 4;
       return;
     }
     long long value = 0;
@@ -477,22 +466,21 @@ void memoryAccess(Instruction &inst, long long* &reg,
       value |= ((long long)mem[addr + i]) << (i * 8);
     }
     inst.arg1 = value;
-    pc += 4;
   }
   else if (inst.code == "SD")
   {
     long long addr = inst.arg1 + inst.arg3; // effective address
     if (addr < 0 || addr + 7 >= mem_size) // valid memory access
     {
-      pc += 4;
       return;
     }
     long long value = inst.arg2; // value to store
+    cout << value << " stored to memory address " << addr 
+      << ": ";
     for (int i = 0; i < 8; i++) // store 8 bytes
     {
       mem[addr + i] = (value >> (i * 8)) & 0xFF;
     }
-    pc += 4;
   }
 }
 
@@ -524,6 +512,7 @@ void programLoop(long long* &reg, unsigned char* &inst_mem,
   Stage id_ex;
   Stage ex_mem;
   Stage mem_wb;
+  if_id.pc = pc;
 
   unsigned int instruction;
   bool running = true;
@@ -539,6 +528,7 @@ void programLoop(long long* &reg, unsigned char* &inst_mem,
     {
       memoryAccess(ex_mem.inst, reg, data_mem, mem_size, ex_mem.pc);
       mem_wb = ex_mem;
+      mem_wb.pc = ex_mem.pc;
       mem_wb.valid = true;
     }
     else
@@ -549,6 +539,7 @@ void programLoop(long long* &reg, unsigned char* &inst_mem,
     {
       instructionExecute(id_ex.inst, id_ex.pc);
       ex_mem = id_ex;
+      ex_mem.pc = id_ex.pc;
       ex_mem.valid = true;
     }
     else
@@ -559,6 +550,7 @@ void programLoop(long long* &reg, unsigned char* &inst_mem,
     {
       id_ex.inst = instructionDecode(instruction, reg);
       id_ex.valid = true;
+      id_ex.pc = if_id.pc;
     }
     else
     {
@@ -566,6 +558,7 @@ void programLoop(long long* &reg, unsigned char* &inst_mem,
     }
     instruction = instructionFetch(pc, mem_size, 
       inst_mem); // Stage 1: Fetch Instruction
+    id_ex.pc = pc;
     if (instruction == 0) // halt on instruction of all zeros
     {
       haltFetched = true;
@@ -607,9 +600,9 @@ int main()
     inst_mem[i] = 0;
   }
   // preset data memory with relevant example values
-  data_mem[513] = 16;  // A base address
-  data_mem[521] = 32;  // B base address
-  data_mem[4128] = 5;   // A[4] = 5
+  data_mem[513] = 32;  // A base address
+  data_mem[521] = 16;  // B base address
+  data_mem[8224] = 3;   // A[4] = 3
 
   // starting program 
   cout << "RISC-V Simulator\nType \"help\" for more information.\n";

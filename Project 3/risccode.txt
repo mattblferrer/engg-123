@@ -1,6 +1,11 @@
 20003083 ld x1,512(x0) ; A base address
 20803103 ld x2,520(x0) ; B base address
-0200b183 ld x3,32(x1)    ; load value of A[4] to reg x3
+00000013 addi x0, x0, 0 ; nop
+0200b183 ld x3,32(x1)    ; load value of A[4] to reg x3\
+00000013 addi x0, x0, 0 ; nop
 00700213 addi x4, x0, 7  ; load 7 to reg x4
+00000013 addi x0, x0, 0 ; nop
+00000013 addi x0, x0, 0 ; nop
 024182b3 mul x5, x3, x4  ; x5 = (x3)(x4)
+00000013 addi x0, x0, 0 ; nop
 02513423 sd x5, 40(x2)   ; store product from reg x5
