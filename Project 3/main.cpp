@@ -276,14 +276,15 @@ Instruction instructionDecode(unsigned int instruction,
   inst.rd = -1;
 
   // constants to define instruction types
-  const int ADDSUB = 0x33;
+  const int ADDSUBMUL = 0x33;
   const int ADDISLLI = 0x13;
   const int LD = 0x03;
   const int SD = 0x23;
   const int BEQBLT = 0x63;
   const int ADDSLLIFUNCT7 = 0x00; 
   const int SUBFUNCT7 = 0x20;
-  const int FUNCT3A = 0x00;  // for ADD, SUB, ADDI, BEQ
+  const int MULFUNCT7 = 0x01;
+  const int FUNCT3A = 0x00;  // for ADD, SUB, ADDI, BEQ, MUL
   const int FUNCT3B = 0x03;  // for LD, SD
   const int FUNCT3C = 0x04; // for BLT
   const int FUNCT3D = 0x01; // for SLLI
@@ -310,7 +311,7 @@ Instruction instructionDecode(unsigned int instruction,
   }
 
   // parse if the instruction is valid and supported
-  if (opcode == ADDSUB)
+  if (opcode == ADDSUBMUL)
   {
     if (funct7 == ADDSLLIFUNCT7 && funct3 == FUNCT3A)  // ADD
     {
@@ -322,6 +323,13 @@ Instruction instructionDecode(unsigned int instruction,
     else if (funct7 == SUBFUNCT7 && funct3 == FUNCT3A)  // SUB
     {
       inst.code = "SUB";
+      inst.arg1 = reg[rd];
+      inst.arg2 = reg[rs1];
+      inst.arg3 = reg[rs2];
+    }
+    else if (funct7 == MULFUNCT7 && funct3 == FUNCT3A)  // MUL
+    {
+      inst.code = "MUL";
       inst.arg1 = reg[rd];
       inst.arg2 = reg[rs1];
       inst.arg3 = reg[rs2];
@@ -401,6 +409,16 @@ void instructionExecute(Instruction &inst, int& pc)
       return;
     }
     inst.arg1 = inst.arg2 - inst.arg3;
+    pc += 4;
+  }
+  else if (inst.code == "MUL")
+  {
+    if (inst.arg1 == 0)
+    {
+      pc += 4;
+      return;
+    }
+    inst.arg1 = inst.arg2 * inst.arg3;
     pc += 4;
   }
   else if (inst.code == "ADDI")
