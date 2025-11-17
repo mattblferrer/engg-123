@@ -142,7 +142,7 @@ void printHelpMenu()
     "location specified by address.\n\n"
     "Type \"showdata [address] [N]\" to display contents of the "
     "simulated RISC-V data memory in hexadecimal, starting at the "
-    "location specified by address and displaying N words.\n"
+    "location specified by address and displaying N words.\n\n"
     "Type \"loadcode [address] [filename]\" to obtain lines of "
     "hexadecimal strings from a text file specified by filename and "
     "store the values to simulated RISC-V memory starting at the "
@@ -537,8 +537,8 @@ void programLoop(long long* &reg, unsigned char* &inst_mem,
     }
     if (ex_mem.valid) // Stage 4: Memory Access
     {
-      memoryAccess(ex_mem.inst, reg, data_mem, mem_size, pc);
-      mem_wb.inst = ex_mem.inst;
+      memoryAccess(ex_mem.inst, reg, data_mem, mem_size, ex_mem.pc);
+      mem_wb = ex_mem;
       mem_wb.valid = true;
     }
     else
@@ -547,9 +547,8 @@ void programLoop(long long* &reg, unsigned char* &inst_mem,
     }
     if (id_ex.valid) // Stage 3: Execute Instruction
     {
-      instructionExecute(id_ex.inst, pc);
-      ex_mem.inst = id_ex.inst;
-      ex_mem.pc = id_ex.pc;
+      instructionExecute(id_ex.inst, id_ex.pc);
+      ex_mem = id_ex;
       ex_mem.valid = true;
     }
     else
@@ -559,7 +558,6 @@ void programLoop(long long* &reg, unsigned char* &inst_mem,
     if (if_id.valid) // Stage 2: Decode Instruction
     {
       id_ex.inst = instructionDecode(instruction, reg);
-      id_ex.pc = if_id.pc;
       id_ex.valid = true;
     }
     else
