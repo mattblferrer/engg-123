@@ -596,7 +596,7 @@ int main()
   long long* reg = new long long[32]; // 32 64-bit registers
   const int mem_size = 1024 * 64; // 64 KB memory
   unsigned char* data_mem = new unsigned char[mem_size];
-  unsigned char* inst_mem = new unsigned char[mem_size];  
+  unsigned char* inst_mem = new unsigned char[mem_size];
 
   // initialize registers and memory to zero
   for (int i = 0; i < 32; i++)
@@ -608,6 +608,10 @@ int main()
     data_mem[i] = 0;
     inst_mem[i] = 0;
   }
+  // preset data memory with relevant example values
+  data_mem[513] = 16;  // A base address
+  data_mem[521] = 32;  // B base address
+  data_mem[4128] = 5;   // A[4] = 5
 
   // starting program 
   cout << "RISC-V Simulator\nType \"help\" for more information.\n";
