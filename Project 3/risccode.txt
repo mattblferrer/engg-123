@@ -8,4 +8,5 @@
 00000013 addi x0, x0, 0 ; nop
 024182b3 mul x5, x3, x4  ; x5 = (x3)(x4)
 00000013 addi x0, x0, 0 ; nop
+00000013 addi x0, x0, 0 ; nop
 02513423 sd x5, 40(x2)   ; store product from reg x5
