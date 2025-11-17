@@ -475,8 +475,6 @@ void memoryAccess(Instruction &inst, long long* &reg,
       return;
     }
     long long value = inst.arg2; // value to store
-    cout << value << " stored to memory address " << addr 
-      << ": ";
     for (int i = 0; i < 8; i++) // store 8 bytes
     {
       mem[addr + i] = (value >> (i * 8)) & 0xFF;
