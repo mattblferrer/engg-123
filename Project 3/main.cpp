@@ -255,7 +255,6 @@ unsigned int instructionFetch(int& pc, const int mem_size,
   }
   if (instruction == 0) // halt on instruction of all zeros
   {
-    cout << "Halt instruction encountered. Stopping execution.\n";
     return 0;
   }
   pc += 4;
@@ -571,6 +570,7 @@ void programLoop(long long* &reg, unsigned char* &inst_mem,
     if (haltFetched && !if_id.valid && !id_ex.valid && 
       !ex_mem.valid && !mem_wb.valid)
     {
+      cout << "Pipeline cleared. Stopping execution.\n";
       running = false;
     }
   }
