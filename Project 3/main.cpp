@@ -444,6 +444,16 @@ void instructionExecute(Instruction &inst, int& pc)
     int shamt = inst.arg3; // shift amount for slli
     inst.arg1 = inst.arg2 << shamt;
   }
+  else if (inst.code == "LD")
+  {
+    // pass effective address to memory access stage
+    inst.arg1 = inst.arg2 + inst.arg3; 
+  }
+  else if (inst.code == "SD")
+  {
+    // pass effective address to memory access stage
+    inst.arg1 = inst.arg1 + inst.arg3; 
+  }
 }
 
 /**
@@ -454,7 +464,7 @@ void memoryAccess(Instruction &inst, long long* &reg,
 {
   if (inst.code == "LD")
   {
-    long long addr = inst.arg2 + inst.arg3; // effective address
+    long long addr = inst.arg1; // effective address
     if (addr < 0 || addr + 7 >= mem_size) // valid memory access
     {
       return;
@@ -468,7 +478,7 @@ void memoryAccess(Instruction &inst, long long* &reg,
   }
   else if (inst.code == "SD")
   {
-    long long addr = inst.arg1 + inst.arg3; // effective address
+    long long addr = inst.arg1; // effective address
     if (addr < 0 || addr + 7 >= mem_size) // valid memory access
     {
       return;
@@ -514,6 +524,9 @@ void programLoop(long long* &reg, unsigned char* &inst_mem,
   unsigned int instruction;
   bool running = true;
   bool haltFetched = false;
+
+  cout << "Starting program execution at address " 
+    << pc << ".\n";
 
   while (running)
   {
@@ -600,7 +613,6 @@ int main()
   // preset data memory with relevant example values
   data_mem[513] = 32;  // A base address
   data_mem[521] = 16;  // B base address
-  data_mem[8224] = 3;   // A[4] = 3
 
   // starting program 
   cout << "RISC-V Simulator\nType \"help\" for more information.\n";
