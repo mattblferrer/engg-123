@@ -1,0 +1,6 @@
+- Project 1: RISC-V Instruction Decoding 
+  - C++ code that simulates the decoding of RISC-V instructions such as add, sub, addi, ld, and sd.
+- Project 2: Interactive Basic RISC-V Simulator
+  - Builds on Project 1 by simulating bubble sort on a fixed array of 64-bit unsigned integers using RISC-V instructions.    
+- Project 3: RISC-V Pipeline Simulator using C++
+  - Implements a multiplication instruction using pipelining. Uses the previous two projects as a base. 
